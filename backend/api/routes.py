@@ -42,8 +42,15 @@ async def discover_ip_endpoint(request: IPDiscoveryRequest):
     return {"status": "success", "data": pitch}
 
 @router.post("/analyze-performance")
-async def analyze_performance_endpoint(request: AudioAnalysisRequest):
-    analysis = analyze_audio_performance(filename=request.filename)
+async def analyze_performance_endpoint(request: AudioAnalysisRequest, db: Session = Depends(get_db)):
+    script_data = None
+    if request.script_id > 0:
+        # Agent-to-Agent: fetch the script from Library (saved by Data Ingestion Agent)
+        script_record = db.query(DramaScript).filter(DramaScript.id == request.script_id).first()
+        if script_record:
+            script_data = json.loads(script_record.script_content)
+    
+    analysis = analyze_audio_performance(filename=request.filename, script_data=script_data)
     return {"status": "success", "data": analysis}
 
 @router.post("/auto-dub")
