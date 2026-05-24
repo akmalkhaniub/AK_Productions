@@ -20,7 +20,7 @@ def discover_ip_remake(genre: str, era: str) -> dict:
             prompt = f"You are a Hollywood executive AI. The user wants to discover a forgotten {genre} IP from the {era} to remake for modern audiences. Provide a JSON response with the following keys: 'original_title', 'year', 'logline', 'modern_twist', 'why_now', and a 'match_score' (1-100)."
             
             response = client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )

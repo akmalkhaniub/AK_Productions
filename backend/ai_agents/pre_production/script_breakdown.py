@@ -21,7 +21,7 @@ def parse_and_breakdown(filename: str):
             prompt = f"You are an expert Hollywood line producer. I have a script titled '{title}'. Generate a simulated script breakdown with 5 key production elements (Cast, Props, Wardrobe, Vehicles, VFX) and an estimated budget range. Return JSON matching this structure: {{'script_title': str, 'total_scenes': int, 'speaking_roles': int, 'estimated_budget_range': str, 'elements': [{{'id': int, 'category': str, 'item': str, 'scene': str, 'cost_est': str, 'notes': str}}]}}"
             
             response = client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
