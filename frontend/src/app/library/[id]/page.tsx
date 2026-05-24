@@ -71,7 +71,7 @@ export default function ScriptViewer() {
             <h1 className="font-semibold text-foreground tracking-tight line-clamp-1">{script.title}</h1>
             <div className="flex items-center text-xs text-muted-foreground">
               <span className="mr-3">ID: {script.video_id}</span>
-              <span>Imported: {new Date(script.created_at).toLocaleDateString()}</span>
+              <span suppressHydrationWarning>Imported: {new Date(script.created_at).toLocaleDateString()}</span>
             </div>
           </div>
         </div>

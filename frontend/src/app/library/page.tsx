@@ -99,7 +99,7 @@ export default function Library() {
                 <div className="p-6 border-b border-border bg-muted/30 group-hover:bg-muted/50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-lg font-semibold text-foreground line-clamp-1 group-hover:text-foreground/80 transition-colors">{script.title}</h2>
-                    <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">
+                    <span suppressHydrationWarning className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">
                       {new Date(script.created_at).toLocaleDateString()}
                     </span>
                   </div>
