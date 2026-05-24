@@ -42,6 +42,33 @@ flowchart TD
     A4 <--> OAI
 ```
 
+## 🛠 Tech Stack
+
+The architecture is built on a modern, high-performance stack designed for scale and premium UX:
+
+### Web Dashboard (Next.js)
+- **Framework**: Next.js 16 (React 19)
+- **Styling**: TailwindCSS v4 with custom Glassmorphism/Neon design system
+- **Animations**: Framer Motion (Physics-based staggered layout animations)
+- **Iconography**: Lucide React
+
+### Mobile Application (Expo / React Native)
+- **Framework**: Expo SDK 56 (React Native)
+- **Routing**: Expo Router (File-based routing)
+- **Native Animations**: React Native Reanimated & Moti
+- **Iconography**: Lucide React Native
+- **Styling**: Native StyleSheet & Expo Blur (for glass effects)
+
+### Backend Services (Python)
+- **Framework**: FastAPI (High-performance async Python API)
+- **Database**: PostgreSQL (Relational persistence layer)
+- **Validation**: Pydantic (Strongly-typed data contracts)
+
+### Artificial Intelligence
+- **LLM Engine**: OpenAI GPT-4 Turbo
+- **Agentic Framework**: Custom Python orchestration for structured JSON generation
+- **Data Modalities**: Text processing, Audio (Prosody/Pitch), & Computer Vision (Continuity)
+
 ## 🤖 AI Agent Modules
 
 The platform is designed around 5 core AI agents. Below are the detailed internal architectures for the primary agents.
