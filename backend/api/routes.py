@@ -7,8 +7,10 @@ from ai_agents.post_production.auto_dubber import generate_dub
 from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
-from core.models import Project
+from core.models import Project, DramaScript
 from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
+from ai_agents.data_ingestion.video_downloader import download_youtube_video
+from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
 
 router = APIRouter()
 
@@ -18,6 +20,8 @@ class IPDiscoveryRequest(BaseModel):
 
 class YoutubeIngestRequest(BaseModel):
     url: str
+    model: str = "openai"
+    duration: int = 0 # 0 means full video
 
 class AudioAnalysisRequest(BaseModel):
     filename: str
@@ -57,10 +61,92 @@ async def check_continuity_endpoint(request: ContinuityRequest):
     result = check_continuity(filename=request.filename)
     return {"status": "success", "data": result}
 
+import json
+from sqlalchemy.orm import Session
+
+def extract_video_id(url: str):
+    if "v=" in url:
+        return url.split("v=")[1].split("&")[0]
+    elif "youtu.be/" in url:
+        return url.split("youtu.be/")[1].split("?")[0]
+    return "unknown_" + url[-10:]
+
+def save_script_to_db(db: Session, video_id: str, result_data: dict):
+    # Check if exists
+    existing = db.query(DramaScript).filter(DramaScript.video_id == video_id).first()
+    
+    script_data = result_data.get("data", {})
+    
+    if existing:
+        existing.title = script_data.get("title", "Untitled")
+        existing.scene_description = script_data.get("scene_description", "")
+        existing.characters_identified = ",".join(script_data.get("characters_identified", []))
+        existing.script_content = json.dumps(script_data)
+    else:
+        new_script = DramaScript(
+            video_id=video_id,
+            title=script_data.get("title", "Untitled"),
+            scene_description=script_data.get("scene_description", ""),
+            characters_identified=",".join(script_data.get("characters_identified", [])),
+            script_content=json.dumps(script_data)
+        )
+        db.add(new_script)
+    db.commit()
+
 @router.post("/ingest-youtube")
-async def ingest_youtube_endpoint(request: YoutubeIngestRequest):
-    result = await ingest_youtube_drama(video_url=request.url)
+async def ingest_youtube_endpoint(request: YoutubeIngestRequest, db: Session = Depends(get_db)):
+    result = await ingest_youtube_drama(video_url=request.url, model_override=request.model)
+    if result.get("status") == "success":
+        video_id = extract_video_id(request.url)
+        save_script_to_db(db, video_id, result)
     return result
+
+@router.post("/analyze-video")
+async def analyze_video_endpoint(request: YoutubeIngestRequest, db: Session = Depends(get_db)):
+    try:
+        video_path = download_youtube_video(request.url, max_duration_seconds=request.duration)
+        result = await analyze_video_with_gemini(video_path)
+        if result.get("status") == "success":
+            video_id = extract_video_id(request.url)
+            save_script_to_db(db, video_id, result)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@router.get("/library")
+def get_library(db: Session = Depends(get_db)):
+    scripts = db.query(DramaScript).order_by(DramaScript.created_at.desc()).all()
+    results = []
+    for s in scripts:
+        results.append({
+            "id": s.id,
+            "video_id": s.video_id,
+            "title": s.title,
+            "scene_description": s.scene_description,
+            "characters_identified": s.characters_identified.split(",") if s.characters_identified else [],
+            "created_at": s.created_at.isoformat(),
+            "data": json.loads(s.script_content)
+        })
+    return {"status": "success", "data": results}
+
+@router.get("/library/{script_id}")
+def get_library_item(script_id: int, db: Session = Depends(get_db)):
+    s = db.query(DramaScript).filter(DramaScript.id == script_id).first()
+    if not s:
+        return {"status": "error", "message": "Script not found"}
+    
+    return {
+        "status": "success",
+        "data": {
+            "id": s.id,
+            "video_id": s.video_id,
+            "title": s.title,
+            "scene_description": s.scene_description,
+            "characters_identified": s.characters_identified.split(",") if s.characters_identified else [],
+            "created_at": s.created_at.isoformat(),
+            "data": json.loads(s.script_content)
+        }
+    }
 
 # --- Database Test Routes ---
 

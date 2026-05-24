@@ -8,9 +8,12 @@ load_dotenv()
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-async def ingest_youtube_drama(video_url: str):
+from google import genai
+from google.genai import types
+
+async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
     """
-    Extracts raw subtitles from a YouTube URL and uses GPT-4o-mini
+    Extracts raw subtitles from a YouTube URL and uses GPT-4o-mini or Gemini 1.5 Pro
     to structure it into a screenplay format (identifying speakers).
     """
     try:
@@ -43,7 +46,7 @@ async def ingest_youtube_drama(video_url: str):
         Your job:
         1. Infer the context and identify who is speaking (assign generic names like 'CHARACTER 1', 'MALE LEAD', 'MOTHER' if you don't know the character names from context).
         2. Format the raw text into a professional screenplay format.
-        3. Provide the dialogue in both the original language (Roman Urdu/Hindi) and an English translation.
+        3. Provide the dialogue in multiple formats: the original Urdu script (اردو), Roman Urdu, and an English translation.
         
         Return ONLY valid JSON in this exact structure:
         {
@@ -53,24 +56,38 @@ async def ingest_youtube_drama(video_url: str):
             "script": [
                 {
                     "speaker": "CHARACTER NAME",
-                    "original_dialogue": "Roman Urdu text",
-                    "english_translation": "English text"
+                    "dialogue": {
+                        "urdu_script": "Original Urdu text in Nastaliq/Arabic characters",
+                        "roman_urdu": "Romanized Urdu text",
+                        "english": "English translation"
+                    }
                 }
             ]
         }
         """
 
-        # Call OpenAI
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            response_format={ "type": "json_object" },
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Here is the raw transcript to format:\n\n{raw_text}"}
-            ]
-        )
+        if model_override == "gemini":
+            print("Routing text parsing to Gemini 1.5 Pro via Vertex AI...")
+            g_client = genai.Client(vertexai=True, project="agentic-portfolio-496720", location="us-central1")
+            response = g_client.models.generate_content(
+                model='gemini-1.5-pro',
+                contents=[system_prompt + f"\n\nHere is the raw transcript:\n\n{raw_text}"],
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            structured_data = json.loads(response.text)
+        else:
+            print("Routing text parsing to OpenAI GPT-4o-mini...")
+            # Call OpenAI
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                response_format={ "type": "json_object" },
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Here is the raw transcript to format:\n\n{raw_text}"}
+                ]
+            )
+            structured_data = json.loads(response.choices[0].message.content)
 
-        structured_data = json.loads(response.choices[0].message.content)
         
         return {
             "status": "success",

@@ -1,152 +1,254 @@
-# AK_Productions Studio OS 🎬
+<p align="center">
+  <h1 align="center">🎬 AK Productions — Studio OS</h1>
+  <p align="center">
+    <strong>The AI-Native Film Production Platform</strong><br/>
+    An agentic AI system that orchestrates autonomous, multimodal agents to power every stage of film & TV production.
+  </p>
+  <p align="center">
+    <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
+    <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
+    <a href="#getting-started"><strong>🚀 Getting Started</strong></a>
+  </p>
+</p>
 
-A next-generation, premium-grade AI orchestration platform for film and television production. AK_Productions unifies the entire lifecycle of pre-production, production, and post-production into a single, cohesive ecosystem powered by advanced AI models.
+---
 
-## 🏗 System Architecture
+## What is AK Productions?
 
-The platform operates as a monorepo consisting of three distinct layers:
+AK Productions is a **multi-agent AI platform** for film & television production. Instead of one monolithic chatbot, it deploys a network of **6 specialized AI agents** — each purpose-built for a specific production workflow — that share a persistent PostgreSQL knowledge base.
+
+The platform's flagship capability is its **Multimodal Data Ingestion Engine**: paste a YouTube URL, and the system will download the video, feed it to **Google Gemini 1.5 Pro** (via Vertex AI), and automatically generate a structured, trilingual screenplay — complete with actor timestamps, scene topography, and camera angle descriptions.
+
+> **Target Submission:** [Google for Startups: AI Agents Challenge 2026](https://devpost.com) — Deadline June 5, 2026
+
+---
+
+## ✨ Key Features
+
+| Feature | Description |
+|---|---|
+| 🎬 **Multimodal Video Analysis** | Download YouTube videos and feed them directly to Gemini 1.5 Pro. The model watches the video and extracts dialogue, actor sequences, scene layouts, and camera angles — all in one pass. |
+| 🌐 **Trilingual Script Output** | Every line of dialogue is structured in **Urdu Script (اردو)**, **Roman Urdu**, and **English** simultaneously. |
+| 🔀 **Model-Agnostic AI** | Switch between **OpenAI GPT-4o-mini** and **Google Gemini 1.5 Pro** directly from the UI. Use the right model for the right job. |
+| 📚 **Persistent Script Library** | All extracted screenplays are saved to PostgreSQL. Browse, search, and revisit any script from the Library dashboard. |
+| 🖥 **Studio Script Viewer** | Split-screen view: embedded YouTube player on the left, synced screenplay on the right. Read the script as you watch the scene. |
+| ⏱ **Configurable Duration** | Don't download a 2-hour movie to test one scene. Set a duration limit (e.g., first 5 minutes) from the UI. |
+| 🤖 **6 Specialized Agents** | IP Discovery, Script Breakdown, Acting Coach, Continuity, Auto-Dubbing, and Data Ingestion — each with its own logic, prompts, and data pipeline. |
+| 📱 **Cross-Platform** | Web (Next.js), iOS & Android (Expo React Native), all hitting the same FastAPI backend. |
+
+---
+
+## 🏗 Architecture
 
 ```mermaid
 flowchart TD
     subgraph Clients
-        W[Next.js Web Dashboard]
-        M[Expo React Native Mobile App]
+        W["🖥 Next.js Web Dashboard"]
+        M["📱 Expo React Native Mobile"]
     end
 
-    subgraph Backend[Backend Services]
-        API[FastAPI Server]
-        DB[(PostgreSQL Database)]
-        
-        subgraph Agents[AI Agents]
-            A1[IP Discovery Agent]
-            A2[Acting Coach Agent]
-            A3[Auto-Dubber Agent]
-            A4[Script Breakdown Agent]
-            A5[Continuity Agent]
+    subgraph Backend["FastAPI Backend"]
+        API["API Gateway"]
+        DB[("PostgreSQL")]
+
+        subgraph Agents["AI Agent Network"]
+            DI["📥 Data Ingestion"]
+            IP["🔍 IP Discovery"]
+            SB["📄 Script Breakdown"]
+            AC["🎭 Acting Coach"]
+            CA["🎯 Continuity"]
+            AD["🌍 Auto-Dubbing"]
         end
     end
 
-    subgraph External[External LLMs]
-        OAI[OpenAI GPT-4 Turbo]
+    subgraph AI["AI Model Layer"]
+        G["Gemini 1.5 Pro — Vertex AI"]
+        O["OpenAI GPT-4o-mini"]
     end
 
-    W <-->|REST / JSON| API
-    M <-->|REST / JSON| API
+    subgraph Data["Data Sources"]
+        YT["YouTube — yt-dlp"]
+    end
+
+    W <-->|REST| API
+    M <-->|REST| API
     API <--> DB
-    API <--> A1
-    API <--> A2
-    API <--> A3
-    API <--> A4
-    API <--> A5
-    A1 <--> OAI
-    A4 <--> OAI
+    API --> Agents
+    DI --> YT
+    DI --> G
+    DI --> O
+    IP --> O
+    SB --> O
+    AC --> G
+    CA --> G
 ```
+
+---
 
 ## 🛠 Tech Stack
 
-The architecture is built on a modern, high-performance stack designed for scale and premium UX:
+| Layer | Technology |
+|---|---|
+| **Web** | Next.js 16 · React 19 · Tailwind CSS v4 · Framer Motion |
+| **Mobile** | Expo SDK 56 · React Native · Moti · Reanimated |
+| **Backend** | FastAPI · Python 3.14 · Pydantic · SQLAlchemy |
+| **Database** | PostgreSQL |
+| **AI (Multimodal)** | Google Gemini 1.5 Pro via Vertex AI (GCP) |
+| **AI (Text)** | OpenAI GPT-4o-mini |
+| **Video Pipeline** | yt-dlp · YouTube Transcript API |
+| **Infra** | Google Cloud Platform · Vertex AI |
+| **Design** | Monochrome enterprise design system · Dark/Light theme · `next-themes` |
 
-### Web Dashboard (Next.js)
-- **Framework**: Next.js 16 (React 19)
-- **Styling**: TailwindCSS v4 with custom Glassmorphism/Neon design system
-- **Animations**: Framer Motion (Physics-based staggered layout animations)
-- **Iconography**: Lucide React
+---
 
-### Mobile Application (Expo / React Native)
-- **Framework**: Expo SDK 56 (React Native)
-- **Routing**: Expo Router (File-based routing)
-- **Native Animations**: React Native Reanimated & Moti
-- **Iconography**: Lucide React Native
-- **Styling**: Native StyleSheet & Expo Blur (for glass effects)
+## 🤖 AI Agents
 
-### Backend Services (Python)
-- **Framework**: FastAPI (High-performance async Python API)
-- **Database**: PostgreSQL (Relational persistence layer)
-- **Validation**: Pydantic (Strongly-typed data contracts)
+### 📥 Data Ingestion Agent
+Paste a YouTube URL. Choose between **Fast Transcript Extraction** (subtitles + LLM) or **Deep Video Analysis** (MP4 download + Gemini vision). Select your preferred AI model and duration limit. The agent structures the output as a trilingual screenplay and persists it to PostgreSQL.
 
-### Artificial Intelligence
-- **LLM Engine**: OpenAI GPT-4 Turbo
-- **Agentic Framework**: Custom Python orchestration for structured JSON generation
-- **Data Modalities**: Text processing, Audio (Prosody/Pitch), & Computer Vision (Continuity)
+### 🔍 IP Discovery Agent
+Specify a genre and era. The agent uses LLMs to surface forgotten intellectual properties and generate modern remake pitches with audience fit scores.
 
-## 🤖 AI Agent Modules
+### 📄 Script Breakdown Agent
+Upload a screenplay PDF. The agent parses it and extracts cast requirements, props, wardrobe, vehicles, VFX needs, and estimated budget.
 
-The platform is designed around 5 core AI agents. Below are the detailed internal architectures for the primary agents.
+### 🎭 Acting Coach Agent
+Upload a `.wav` audition recording. The agent extracts pitch variance, tempo, emotional mapping, and clarity metrics to provide objective performance feedback.
 
-### 1. IP Discovery (Pre-Production)
-Scans historical databases to find forgotten IPs that match modern trends. Integrates with OpenAI to generate modern loglines and twists.
+### 🎯 Continuity Agent
+Upload frames from different takes. Computer vision compares them to flag inconsistencies in props, lighting, and wardrobe.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant IP_Agent as IP Discovery Agent
-    participant LLM as OpenAI (GPT-4)
-    participant DB as Postgres DB
+### 🌍 Auto-Dubbing Agent
+Transcribes audio, translates it via LLM, and generates synthesized voice dubs for foreign language markets.
 
-    User->>IP_Agent: Request "Sci-Fi Thriller" from "1980s"
-    IP_Agent->>LLM: Generate prompt for forgotten IP & modern twist
-    LLM-->>IP_Agent: Return JSON (Original Title, Logline, Twist, Score)
-    IP_Agent->>DB: Log discovery event
-    IP_Agent-->>User: Display match with 95% Confidence Score
-```
-
-### 2. Script Breakdown (Pre-Production)
-Parses PDF scripts to automatically extract casting requirements, props, wardrobe, and estimated budgets. 
-
-```mermaid
-flowchart LR
-    A[Upload Script PDF] --> B[Text Extraction]
-    B --> C{Breakdown Agent}
-    C -->|Prompt Context| D[OpenAI / LLM]
-    D -->|JSON Output| C
-    C --> E[Cast]
-    C --> F[Props]
-    C --> G[Wardrobe]
-    C --> H[Vehicles & VFX]
-```
-
-### 3. Acting Coach (Casting)
-Analyzes audio files of actor performances, providing emotion mapping, pitch variance, and clarity scores.
-
-```mermaid
-graph TD
-    A[Audio Upload .wav] --> B[Feature Extraction]
-    B --> C(Pitch Variance)
-    B --> D(Tempo Analysis)
-    B --> E(Clarity Score)
-    C --> F{Emotion Classifier}
-    D --> F
-    E --> F
-    F --> G[Feedback & Overall Score]
-```
-
-### 4. Continuity Agent (Production)
-Uses computer vision to analyze frames across scenes, ensuring props, lighting, and wardrobe remain consistent.
-
-### 5. Auto-Dubbing (Post-Production)
-Transcribes, translates, and generates lip-synced audio clones in foreign languages for global distribution.
+---
 
 ## 🚀 Getting Started
 
-Ensure you have Node.js, Python 3.14+, and PostgreSQL installed on your machine.
+### Prerequisites
+- **Node.js** 20+
+- **Python** 3.14+
+- **PostgreSQL** 15+
+- **Google Cloud SDK** (authenticated via `gcloud auth application-default login`)
 
-### 1. Backend Setup
-1. Navigate to the backend directory: `cd backend`
-2. Create your `.env` file and add your `DATABASE_URL` and `OPENAI_API_KEY`.
-3. Install dependencies: `pip install -r requirements.txt`
-4. Start the server: `uvicorn main:app --reload`
+### 1. Clone & Configure
 
-### 2. Web Dashboard Setup
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Run the development server: `npm run dev`
-4. Open [http://localhost:3000](http://localhost:3000)
+```bash
+git clone https://github.com/your-repo/AK_Productions.git
+cd AK_Productions
+```
 
-### 3. Mobile App Setup
-1. Navigate to the mobile directory: `cd mobile_app`
-2. Install dependencies: `npm install`
-3. Launch the Expo bundler: `npx expo start`
-4. Run on an emulator using `npm run android` or `npm run ios`.
+Create `backend/.env`:
+```env
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/ak_productions
+OPENAI_API_KEY=sk-your-openai-key
+```
 
-## 🎨 Design System
-The frontend and mobile applications share a unified design language centered around **Glassmorphism**, featuring dark neon cinematic accents (`#020617` backgrounds with `#22d3ee` and `#c084fc` neon highlights) to provide a premium, state-of-the-art experience.
+> **Note:** Gemini 1.5 Pro authenticates automatically via your local GCP credentials (Vertex AI). No separate API key needed.
+
+### 2. Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+The API server starts at `http://localhost:8000`.
+
+### 3. Web Dashboard
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:3000`.
+
+### 4. Mobile App
+
+```bash
+cd mobile_app
+npm install
+npx expo start
+```
+
+---
+
+## 📂 Project Structure
+
+```
+AK_Productions/
+├── frontend/                   # Next.js 16 Web Dashboard
+│   └── src/app/
+│       ├── data-ingestion/     # YouTube ingestion UI + config panel
+│       ├── library/            # Script library + [id] detail viewer
+│       ├── ip-discovery/       # IP Discovery agent UI
+│       ├── acting-coach/       # Acting Coach agent UI
+│       ├── script-breakdown/   # Script Breakdown agent UI
+│       ├── continuity-agent/   # Continuity agent UI
+│       ├── auto-dubbing/       # Auto-Dubbing agent UI
+│       └── pipeline/           # Multi-step pipeline wizard
+├── backend/                    # FastAPI Backend
+│   ├── api/routes.py           # All API endpoints
+│   ├── core/
+│   │   ├── database.py         # PostgreSQL connection
+│   │   └── models.py           # SQLAlchemy models
+│   └── ai_agents/
+│       ├── data_ingestion/
+│       │   ├── youtube_scraper.py      # Transcript extraction + LLM
+│       │   ├── video_downloader.py     # yt-dlp video download
+│       │   └── gemini_analyzer.py      # Gemini 1.5 Pro multimodal
+│       ├── pre_production/
+│       │   ├── ip_discovery.py
+│       │   └── script_breakdown.py
+│       ├── casting/
+│       │   └── acting_coach.py
+│       ├── production/
+│       │   └── continuity_agent.py
+│       └── post_production/
+│           └── auto_dubber.py
+├── mobile_app/                 # Expo React Native App
+├── PITCH.md                    # 📄 Startup pitch document
+└── README.md                   # This file
+```
+
+---
+
+## 📄 Startup Pitch
+
+For the full startup narrative — problem statement, market opportunity ($370B), competitive differentiation, and roadmap — see **[PITCH.md](./PITCH.md)**.
+
+---
+
+## 📸 Screenshots
+
+> _Coming soon: Data Ingestion Engine, Library Dashboard, Studio Script Viewer._
+
+---
+
+## 🗺 Roadmap
+
+- [x] Multi-agent FastAPI architecture (6 agents)
+- [x] YouTube ingestion pipeline (yt-dlp + transcripts)
+- [x] Gemini 1.5 Pro multimodal video analysis (Vertex AI)
+- [x] Model-agnostic UI (OpenAI ↔ Gemini switcher)
+- [x] PostgreSQL persistence + searchable Library
+- [x] Studio Script Viewer (split-screen video + screenplay)
+- [x] Dark/Light theme system
+- [ ] Acting Coach v2 (compare performance vs. extracted scripts)
+- [ ] Batch ingestion (ingest full drama series)
+- [ ] Real-time collaborative annotations
+- [ ] SaaS multi-tenant deployment
+
+---
+
+## License
+
+MIT
+
+---
+
+<p align="center">
+  <strong>AK Productions</strong> — Where AI meets cinema.<br/>
+  <em>Built with ❤️ using Gemini 1.5 Pro, OpenAI, FastAPI, Next.js, and PostgreSQL.</em>
+</p>
