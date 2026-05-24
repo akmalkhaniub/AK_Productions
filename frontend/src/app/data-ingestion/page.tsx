@@ -144,7 +144,7 @@ export default function DataIngestion() {
             <button 
               type="submit"
               disabled={loading || !url}
-              className="h-12 px-6 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-50 flex items-center transition-colors shadow-sm"
+              className="h-12 px-6 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (useGemini ? "Download & Analyze" : "Extract Script")}
             </button>

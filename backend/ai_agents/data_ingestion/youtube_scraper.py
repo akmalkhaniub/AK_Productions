@@ -28,7 +28,11 @@ async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
         # Fetch Transcript
         try:
             # We attempt to fetch urdu/hindi/english
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['ur', 'hi', 'en'])
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['ur', 'hi', 'en'])
+            except AttributeError:
+                # Fallback for newer youtube-transcript-api versions that use instance method 'fetch'
+                transcript = YouTubeTranscriptApi().fetch(video_id, languages=['ur', 'hi', 'en'])
         except Exception as e:
             return {"status": "error", "message": f"Could not extract subtitles. Ensure the video has closed captions. Error: {str(e)}"}
 
