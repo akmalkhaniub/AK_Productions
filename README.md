@@ -7,17 +7,17 @@ A next-generation, premium-grade AI orchestration platform for film and televisi
 The platform operates as a monorepo consisting of three distinct layers:
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Clients
         W[Next.js Web Dashboard]
         M[Expo React Native Mobile App]
     end
 
-    subgraph Backend Services
+    subgraph Backend[Backend Services]
         API[FastAPI Server]
         DB[(PostgreSQL Database)]
         
-        subgraph AI Agents
+        subgraph Agents[AI Agents]
             A1[IP Discovery Agent]
             A2[Acting Coach Agent]
             A3[Auto-Dubber Agent]
@@ -26,14 +26,18 @@ graph TD
         end
     end
 
-    subgraph External LLMs
+    subgraph External[External LLMs]
         OAI[OpenAI GPT-4 Turbo]
     end
 
     W <-->|REST / JSON| API
     M <-->|REST / JSON| API
     API <--> DB
-    API <--> AI Agents
+    API <--> A1
+    API <--> A2
+    API <--> A3
+    API <--> A4
+    API <--> A5
     A1 <--> OAI
     A4 <--> OAI
 ```
