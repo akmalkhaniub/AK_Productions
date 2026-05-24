@@ -40,13 +40,60 @@ graph TD
 
 ## 🤖 AI Agent Modules
 
-The platform is designed around 5 core AI agents:
+The platform is designed around 5 core AI agents. Below are the detailed internal architectures for the primary agents.
 
-1. **IP Discovery (Pre-Production)**: Scans historical databases to find forgotten IPs that match modern trends. Integrates with OpenAI to generate modern loglines and twists.
-2. **Script Breakdown (Pre-Production)**: Parses PDF scripts to automatically extract casting requirements, props, wardrobe, and estimated budgets. 
-3. **Acting Coach (Casting)**: Analyzes audio files of actor performances, providing emotion mapping, pitch variance, and clarity scores.
-4. **Continuity Agent (Production)**: Uses computer vision to analyze frames across scenes, ensuring props, lighting, and wardrobe remain consistent.
-5. **Auto-Dubbing (Post-Production)**: Transcribes, translates, and generates lip-synced audio clones in foreign languages for global distribution.
+### 1. IP Discovery (Pre-Production)
+Scans historical databases to find forgotten IPs that match modern trends. Integrates with OpenAI to generate modern loglines and twists.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant IP_Agent as IP Discovery Agent
+    participant LLM as OpenAI (GPT-4)
+    participant DB as Postgres DB
+
+    User->>IP_Agent: Request "Sci-Fi Thriller" from "1980s"
+    IP_Agent->>LLM: Generate prompt for forgotten IP & modern twist
+    LLM-->>IP_Agent: Return JSON (Original Title, Logline, Twist, Score)
+    IP_Agent->>DB: Log discovery event
+    IP_Agent-->>User: Display match with 95% Confidence Score
+```
+
+### 2. Script Breakdown (Pre-Production)
+Parses PDF scripts to automatically extract casting requirements, props, wardrobe, and estimated budgets. 
+
+```mermaid
+flowchart LR
+    A[Upload Script PDF] --> B[Text Extraction]
+    B --> C{Breakdown Agent}
+    C -->|Prompt Context| D[OpenAI / LLM]
+    D -->|JSON Output| C
+    C --> E[Cast]
+    C --> F[Props]
+    C --> G[Wardrobe]
+    C --> H[Vehicles & VFX]
+```
+
+### 3. Acting Coach (Casting)
+Analyzes audio files of actor performances, providing emotion mapping, pitch variance, and clarity scores.
+
+```mermaid
+graph TD
+    A[Audio Upload .wav] --> B[Feature Extraction]
+    B --> C(Pitch Variance)
+    B --> D(Tempo Analysis)
+    B --> E(Clarity Score)
+    C --> F{Emotion Classifier}
+    D --> F
+    E --> F
+    F --> G[Feedback & Overall Score]
+```
+
+### 4. Continuity Agent (Production)
+Uses computer vision to analyze frames across scenes, ensuring props, lighting, and wardrobe remain consistent.
+
+### 5. Auto-Dubbing (Post-Production)
+Transcribes, translates, and generates lip-synced audio clones in foreign languages for global distribution.
 
 ## 🚀 Getting Started
 
