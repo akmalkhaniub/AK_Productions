@@ -11,6 +11,7 @@ export default function DataIngestion() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
   const [useGemini, setUseGemini] = useState(false);
+  const [step, setStep] = useState(0);
   
   // Configuration State
   const [selectedModel, setSelectedModel] = useState("openai");
@@ -23,6 +24,11 @@ export default function DataIngestion() {
     setLoading(true);
     setError("");
     setResult(null);
+    setStep(0);
+
+    const interval = setInterval(() => {
+      setStep(prev => prev + 1);
+    }, useGemini ? 7000 : 2000);
 
     const endpoint = useGemini ? 'http://localhost:8000/api/analyze-video' : 'http://localhost:8000/api/ingest-youtube';
 
@@ -47,6 +53,7 @@ export default function DataIngestion() {
     } catch (err) {
       setError("Network error. Make sure backend is running.");
     } finally {
+      clearInterval(interval);
       setLoading(false);
     }
   };
@@ -145,7 +152,7 @@ export default function DataIngestion() {
               type="submit"
               disabled={loading || !url}
               suppressHydrationWarning
-              className="h-12 px-6 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+              className="h-12 px-6 rounded-md bg-zinc-950 text-zinc-50 hover:bg-zinc-900 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 font-medium disabled:opacity-40 flex items-center justify-center transition-colors shadow-md cursor-pointer border border-zinc-200 dark:border-zinc-800"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (useGemini ? "Download & Analyze" : "Extract Script")}
             </button>
@@ -157,15 +164,52 @@ export default function DataIngestion() {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="border border-border rounded-xl p-16 flex flex-col items-center justify-center bg-background min-h-[300px]"
+          className="border border-border rounded-xl p-12 flex flex-col items-center justify-center bg-background min-h-[350px]"
         >
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground">
-            {useGemini ? "Downloading video and running multimodal analysis..." : `Scraping Subtitles & Running ${selectedModel === 'openai' ? 'GPT-4o-mini' : 'Gemini 1.5 Pro'}...`}
+          <Loader2 className="w-10 h-10 animate-spin text-foreground mb-6" />
+          <h3 className="text-xl font-semibold text-foreground mb-6">
+            {useGemini ? "Multimodal Video Analysis Pipeline" : "Fast Script Ingestion Pipeline"}
           </h3>
-          <p className="text-muted-foreground mt-2 text-sm max-w-md text-center">
-            {useGemini ? `Downloading ${duration === 0 ? 'full video' : 'first ' + duration/60 + ' minutes'} directly to the backend for visual topography extraction.` : "The AI is currently structuring the raw data into a screenplay."}
-          </p>
+          
+          <div className="w-full max-w-md bg-muted/50 rounded-lg border border-border p-6 space-y-4 shadow-sm">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Pipeline Status</h4>
+            <ul className="space-y-3 text-sm font-mono">
+              {!useGemini ? (
+                <>
+                  <li className={`flex items-center gap-2 ${step >= 0 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 0 ? "✓" : "→"} 1. Fetching YouTube captions stream
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 1 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 1 ? "✓" : step === 1 ? "→" : "•"} 2. Extracting Urdu & English tracks
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 2 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 2 ? "✓" : step === 2 ? "→" : "•"} 3. Parsing screenplay syntax with {selectedModel === 'openai' ? 'GPT-4o-mini' : 'Gemini 1.5 Pro'}
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 3 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 3 ? "✓" : step === 3 ? "→" : "•"} 4. Mapping characters & dialogue structures
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className={`flex items-center gap-2 ${step >= 0 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 0 ? "✓" : "→"} 1. Connecting to YouTube downloader
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 1 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 1 ? "✓" : step === 1 ? "→" : "•"} 2. Downloading video stream to local backend
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 2 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 2 ? "✓" : step === 2 ? "→" : "•"} 3. Uploading file to Google Vertex AI storage
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 3 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 3 ? "✓" : step === 3 ? "→" : "•"} 4. Analyzing scene layout & actor actions (Gemini 1.5 Pro)
+                  </li>
+                  <li className={`flex items-center gap-2 ${step >= 4 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
+                    {step > 4 ? "✓" : step === 4 ? "→" : "•"} 5. Compiling trilingual dialogue tracks
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
         </motion.div>
       )}
 
