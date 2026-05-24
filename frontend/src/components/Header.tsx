@@ -1,13 +1,13 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Sun, Moon, LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus } from "lucide-react";
+import { Sun, Moon, LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
@@ -49,12 +49,19 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center space-x-4">
+          <Link 
+            href="/pipeline" 
+            className="hidden sm:inline-flex h-9 items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          >
+            Start Pipeline
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-colors hover:bg-accent hover:text-accent-foreground"
             aria-label="Toggle theme"
           >
-            {mounted && theme === "dark" ? (
+            {mounted && resolvedTheme === "dark" ? (
               <Sun className="h-4 w-4" />
             ) : (
               <Moon className="h-4 w-4" />
