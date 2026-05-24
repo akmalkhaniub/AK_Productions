@@ -22,6 +22,22 @@ export default function DataIngestion() {
     setMounted(true);
   }, []);
 
+  const getStepStatus = (index: number) => {
+    const totalSteps = useGemini ? 5 : 4;
+    const cappedStep = Math.min(step, totalSteps - 1);
+    
+    if (loading) {
+      if (step > index) return { icon: "✓", color: "text-emerald-600 dark:text-emerald-400 font-semibold" };
+      if (step === index) return { icon: "→", color: "text-zinc-900 dark:text-zinc-100 font-semibold animate-pulse" };
+      return { icon: "•", color: "text-muted-foreground/40" };
+    } else if (error) {
+      if (cappedStep > index) return { icon: "✓", color: "text-emerald-600 dark:text-emerald-400 font-semibold" };
+      if (cappedStep === index) return { icon: "✗", color: "text-red-500 dark:text-red-400 font-semibold" };
+      return { icon: "•", color: "text-muted-foreground/40" };
+    }
+    return { icon: "•", color: "text-muted-foreground/40" };
+  };
+
   const handleIngest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
@@ -174,63 +190,72 @@ export default function DataIngestion() {
         </form>
       </div>
 
-      {loading && (
+      {(loading || error) && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="border border-border rounded-xl p-12 flex flex-col items-center justify-center bg-background min-h-[350px]"
         >
-          <Loader2 className="w-10 h-10 animate-spin text-foreground mb-6" />
+          {loading ? (
+            <Loader2 className="w-10 h-10 animate-spin text-foreground mb-6" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+              <span className="text-red-500 text-xl font-bold font-mono">!</span>
+            </div>
+          )}
           <h3 className="text-xl font-semibold text-foreground mb-6">
-            {useGemini ? "Multimodal Video Analysis Pipeline" : "Fast Script Ingestion Pipeline"}
+            {loading 
+              ? (useGemini ? "Multimodal Video Analysis Pipeline" : "Fast Script Ingestion Pipeline")
+              : "Ingestion Pipeline Failed"}
           </h3>
           
-          <div className="w-full max-w-md bg-muted/50 rounded-lg border border-border p-6 space-y-4 shadow-sm">
+          <div className="w-full max-w-md bg-muted/50 rounded-lg border border-border p-6 space-y-4 shadow-sm mb-6">
             <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Pipeline Status</h4>
             <ul className="space-y-3 text-sm font-mono">
               {!useGemini ? (
                 <>
-                  <li className={`flex items-center gap-2 ${step >= 0 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 0 ? "✓" : "→"} 1. Fetching YouTube captions stream
+                  <li className={`flex items-center gap-2 ${getStepStatus(0).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(0).icon}</span> 1. Fetching YouTube captions stream
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 1 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 1 ? "✓" : step === 1 ? "→" : "•"} 2. Extracting Urdu & English tracks
+                  <li className={`flex items-center gap-2 ${getStepStatus(1).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(1).icon}</span> 2. Extracting Urdu & English tracks
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 2 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 2 ? "✓" : step === 2 ? "→" : "•"} 3. Parsing screenplay syntax with {selectedModel === 'openai' ? 'GPT-4o-mini' : 'Gemini 1.5 Pro'}
+                  <li className={`flex items-center gap-2 ${getStepStatus(2).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(2).icon}</span> 3. Parsing screenplay syntax with {selectedModel === 'openai' ? 'GPT-4o-mini' : 'Gemini 1.5 Pro'}
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 3 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 3 ? "✓" : step === 3 ? "→" : "•"} 4. Mapping characters & dialogue structures
+                  <li className={`flex items-center gap-2 ${getStepStatus(3).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(3).icon}</span> 4. Mapping characters & dialogue structures
                   </li>
                 </>
               ) : (
                 <>
-                  <li className={`flex items-center gap-2 ${step >= 0 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 0 ? "✓" : "→"} 1. Connecting to YouTube downloader
+                  <li className={`flex items-center gap-2 ${getStepStatus(0).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(0).icon}</span> 1. Connecting to YouTube downloader
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 1 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 1 ? "✓" : step === 1 ? "→" : "•"} 2. Downloading video stream to local backend
+                  <li className={`flex items-center gap-2 ${getStepStatus(1).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(1).icon}</span> 2. Downloading video stream to local backend
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 2 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 2 ? "✓" : step === 2 ? "→" : "•"} 3. Uploading file to Google Vertex AI storage
+                  <li className={`flex items-center gap-2 ${getStepStatus(2).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(2).icon}</span> 3. Uploading file to Google Vertex AI storage
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 3 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 3 ? "✓" : step === 3 ? "→" : "•"} 4. Analyzing scene layout & actor actions (Gemini 1.5 Pro)
+                  <li className={`flex items-center gap-2 ${getStepStatus(3).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(3).icon}</span> 4. Analyzing scene layout & actor actions (Gemini 1.5 Pro)
                   </li>
-                  <li className={`flex items-center gap-2 ${step >= 4 ? 'text-foreground font-semibold' : 'text-muted-foreground/40'}`}>
-                    {step > 4 ? "✓" : step === 4 ? "→" : "•"} 5. Compiling trilingual dialogue tracks
+                  <li className={`flex items-center gap-2 ${getStepStatus(4).color}`}>
+                    <span className="inline-block w-4 text-center">{getStepStatus(4).icon}</span> 5. Compiling trilingual dialogue tracks
                   </li>
                 </>
               )}
             </ul>
           </div>
-        </motion.div>
-      )}
 
-      {error && (
-        <div className="p-4 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 mb-8">
-          {error}
-        </div>
+          {error && (
+            <div className="w-full max-w-md p-4 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-mono break-words">
+              <div className="font-semibold mb-1">Error Details:</div>
+              {error}
+            </div>
+          )}
+        </motion.div>
       )}
 
       {result && (
