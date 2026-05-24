@@ -37,3 +37,14 @@ class AgentLog(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     project = relationship("Project", back_populates="logs")
+
+class DramaScript(Base):
+    __tablename__ = "drama_scripts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    video_id = Column(String, index=True, unique=True)
+    title = Column(String)
+    scene_description = Column(Text)
+    characters_identified = Column(String) # Stored as comma separated string
+    script_content = Column(Text) # Stored as JSON string of the structured script
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

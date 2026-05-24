@@ -8,12 +8,16 @@ from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
 from core.models import Project
+from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 
 router = APIRouter()
 
 class IPDiscoveryRequest(BaseModel):
     genre: str
     era: str
+
+class YoutubeIngestRequest(BaseModel):
+    url: str
 
 class AudioAnalysisRequest(BaseModel):
     filename: str
@@ -52,6 +56,11 @@ async def script_breakdown_endpoint(request: ScriptBreakdownRequest):
 async def check_continuity_endpoint(request: ContinuityRequest):
     result = check_continuity(filename=request.filename)
     return {"status": "success", "data": result}
+
+@router.post("/ingest-youtube")
+async def ingest_youtube_endpoint(request: YoutubeIngestRequest):
+    result = await ingest_youtube_drama(video_url=request.url)
+    return result
 
 # --- Database Test Routes ---
 

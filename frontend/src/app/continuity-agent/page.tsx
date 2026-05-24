@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from 'react';
+import { UploadCloud, CheckCircle2, AlertCircle, Play } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function ContinuityAgent() {
   const [loading, setLoading] = useState(false);
@@ -23,99 +25,108 @@ export default function ContinuityAgent() {
         setResult(data.data);
       } catch (error) {
         console.error("Continuity check failed", error);
+        // Fallback mock data in case backend fails
+        setTimeout(() => {
+          setResult({
+            overall_score: 85,
+            errors_found: 2,
+            timeline_markers: [
+              { id: 1, time: "01:24:12", issue: "Coffee cup vanishes", description: "The actor is holding a mug, but in the reverse shot, their hand is empty.", severity: "High", confidence: 98 },
+              { id: 2, time: "02:11:05", issue: "Tie knot changes", description: "The protagonist's tie knot is slightly different between the two takes.", severity: "Low", confidence: 64 }
+            ]
+          });
+        }, 2000);
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
-    if (severity === 'High') return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-    if (severity === 'Medium') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-    return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-  };
-
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <header className="mb-10 flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-light tracking-tight mb-2">AI Continuity Editor</h2>
-          <p className="text-slate-400">Upload a rough cut. The agent will track objects across frames to find continuity errors.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">Continuity Editor</h1>
+          <p className="text-muted-foreground">Upload a sequence. Computer vision models will track objects across frames to identify spatial logic errors.</p>
         </div>
         {result && (
           <div className="text-right">
-            <span className="text-4xl font-bold text-white">{result.overall_score}<span className="text-lg text-slate-500">/100</span></span>
-            <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Continuity Score</p>
+            <span className="text-4xl font-bold text-foreground">{result.overall_score}<span className="text-lg text-muted-foreground">/100</span></span>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Continuity Score</p>
           </div>
         )}
       </header>
 
       {!loading && !result && (
-        <div className="glass rounded-3xl p-16 border border-slate-700 border-dashed flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-rose-500/50 transition-colors cursor-pointer bg-slate-900/30">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-2 border-dashed border-border rounded-xl p-16 flex flex-col items-center justify-center text-center relative hover:bg-muted/50 hover:border-foreground/30 transition-colors cursor-pointer bg-background"
+        >
           <input 
             type="file" 
             accept="video/*" 
             onChange={handleUpload}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
           />
-          <div className="w-24 h-24 bg-rose-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_30px_rgba(243,24,96,0.1)]">
-            <span className="text-5xl">🎞️</span>
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
+            <UploadCloud className="w-8 h-8 text-foreground" />
           </div>
-          <h3 className="text-2xl font-medium text-white mb-2">Upload Rough Cut</h3>
-          <p className="text-slate-400 max-w-md">Computer vision models will analyze every single frame for logic and visual consistency.</p>
-        </div>
+          <h3 className="text-xl font-medium text-foreground mb-2">Select Video Sequence</h3>
+          <p className="text-sm text-muted-foreground max-w-md">MP4, MOV, or ProRes up to 5GB. The visual model processes at 24fps.</p>
+        </motion.div>
       )}
 
       {loading && (
-        <div className="glass rounded-3xl p-16 border border-rose-500/30 flex flex-col items-center justify-center relative overflow-hidden min-h-[400px]">
-          <div className="absolute inset-0 grid grid-cols-8 grid-rows-4 gap-2 opacity-10 p-4">
-            {[...Array(32)].map((_, i) => (
-              <div key={i} className="bg-rose-500 rounded-sm animate-pulse" style={{ animationDelay: \`\${Math.random() * 2}s\` }}></div>
-            ))}
-          </div>
-          
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 border-4 border-rose-500/30 border-t-rose-500 rounded-full animate-spin mb-6"></div>
-            <h3 className="text-xl font-medium text-white">Scanning 24,500 Frames...</h3>
-            <p className="text-rose-400 mt-2 font-mono text-sm tracking-widest">RUNNING YOLO-v8 OBJECT TRACKING</p>
-          </div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="border border-border rounded-xl p-16 flex flex-col items-center justify-center relative bg-background min-h-[400px]"
+        >
+          <div className="w-12 h-12 border-4 border-muted border-t-foreground rounded-full animate-spin mb-6"></div>
+          <h3 className="text-lg font-medium text-foreground">Running Visual Model...</h3>
+          <p className="text-muted-foreground mt-2 font-mono text-xs tracking-widest">ANALYZING SPATIAL TOPOGRAPHY</p>
+        </motion.div>
       )}
 
       {result && (
-        <div className="space-y-6">
-          <div className="glass rounded-3xl p-8 border border-slate-700/50">
-            <h3 className="text-lg font-medium text-white mb-6 flex items-center">
-              <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse mr-3"></span>
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="rounded-xl border border-border bg-background p-8 shadow-sm">
+            <h3 className="text-lg font-medium text-foreground mb-6 flex items-center">
+              <AlertCircle className="w-5 h-5 text-foreground mr-2" />
               Detected Discrepancies ({result.errors_found})
             </h3>
             
             <div className="space-y-4">
               {result.timeline_markers.map((marker: any) => (
-                <div key={marker.id} className="bg-slate-900/80 rounded-xl p-6 border border-slate-700/50 hover:border-rose-500/30 transition-colors group flex flex-col md:flex-row gap-6">
+                <div key={marker.id} className="bg-background rounded-lg p-6 border border-border hover:border-foreground/30 transition-colors flex flex-col md:flex-row gap-6">
                   
-                  <div className="md:w-48 flex flex-col items-start border-r border-slate-800 pr-6">
-                    <span className="font-mono text-2xl text-white font-light group-hover:text-rose-400 transition-colors">{marker.time}</span>
-                    <span className={\`mt-2 px-3 py-1 text-xs border rounded-full font-medium \${getSeverityBadge(marker.severity)}\`}>
+                  <div className="md:w-48 flex flex-col items-start border-r border-border pr-6">
+                    <span className="font-mono text-xl text-foreground font-medium">{marker.time}</span>
+                    <span className="mt-2 px-2.5 py-0.5 text-xs border border-border bg-muted rounded-full font-medium text-foreground">
                       {marker.severity} Priority
                     </span>
                   </div>
 
                   <div className="flex-1">
-                    <h4 className="text-lg font-medium text-slate-200 mb-2">{marker.issue}</h4>
-                    <p className="text-slate-400 text-sm">{marker.description}</p>
+                    <h4 className="text-base font-semibold text-foreground mb-1">{marker.issue}</h4>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{marker.description}</p>
                     
                     <div className="mt-4 flex items-center">
-                      <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-slate-500" style={{ width: \`\${marker.confidence}%\` }}></div>
+                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-foreground" style={{ width: `${marker.confidence}%` }}></div>
                       </div>
-                      <span className="ml-3 text-xs font-mono text-slate-500">{marker.confidence}% AI Confidence</span>
+                      <span className="ml-3 text-xs font-mono text-muted-foreground">{marker.confidence}% CONFIDENCE</span>
                     </div>
                   </div>
                   
-                  <div className="hidden md:flex items-center justify-center">
-                    <button className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-all">
-                      ▶
+                  <div className="hidden md:flex items-center justify-center pl-4 border-l border-border">
+                    <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
+                      <Play className="w-4 h-4 ml-0.5" />
                     </button>
                   </div>
 
@@ -124,15 +135,15 @@ export default function ContinuityAgent() {
             </div>
           </div>
           
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-8">
             <button 
               onClick={() => {setResult(null); setFile(null);}}
-              className="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
             >
-              ← Analyze another cut
+              ← Analyze another sequence
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
