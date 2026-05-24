@@ -7,7 +7,8 @@
   <p align="center">
     <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
     <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
-    <a href="#getting-started"><strong>🚀 Getting Started</strong></a>
+    <a href="./GCP_DEPLOYMENT.md"><strong>🚀 GCP Deployment</strong></a> · 
+    <a href="#getting-started"><strong>📦 Getting Started</strong></a>
   </p>
 </p>
 
@@ -235,7 +236,7 @@ For the full startup narrative — problem statement, market opportunity ($370B)
 - [x] PostgreSQL persistence + searchable Library
 - [x] Studio Script Viewer (split-screen video + screenplay)
 - [x] Dark/Light theme system
-- [ ] Acting Coach v2 (compare performance vs. extracted scripts)
+- [x] Acting Coach v2 (compare performance vs. extracted scripts)
 - [ ] Batch ingestion (ingest full drama series)
 - [ ] Real-time collaborative annotations
 - [ ] SaaS multi-tenant deployment

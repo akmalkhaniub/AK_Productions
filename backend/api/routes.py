@@ -25,6 +25,7 @@ class YoutubeIngestRequest(BaseModel):
 
 class AudioAnalysisRequest(BaseModel):
     filename: str
+    script_id: int = 0
 
 class AutoDubRequest(BaseModel):
     filename: str

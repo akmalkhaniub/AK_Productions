@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Globe, Loader2, Play, CheckCircle2 } from 'lucide-react';
 
 export default function AutoDubbing() {
   const [loading, setLoading] = useState(false);
@@ -31,34 +33,37 @@ export default function AutoDubbing() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto py-10 px-4">
       <header className="mb-10">
-        <h2 className="text-3xl font-light tracking-tight mb-2">Automated Video Dubbing</h2>
-        <p className="text-slate-400">Translate dialogue, clone voices, and lip-sync video in one click.</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">Automated Video Dubbing</h1>
+        <p className="text-muted-foreground">Translate dialogue, clone voices, and lip-sync video for global distribution.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <form onSubmit={handleProcess} className="glass rounded-3xl p-8 border border-slate-700/50">
+          <form onSubmit={handleProcess} className="border border-border rounded-xl p-8 bg-background shadow-sm">
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Upload Source Video</label>
-              <div className="relative">
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Upload Source Video</label>
+              <div className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-center relative hover:bg-muted/50 hover:border-foreground/30 transition-colors cursor-pointer">
                 <input 
                   type="file" 
                   accept="video/*" 
                   onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                  className="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20 transition-all cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   required
                 />
+                <Globe className="w-10 h-10 text-muted-foreground mb-3" />
+                <p className="text-sm font-medium text-foreground">{file ? file.name : "Drop video file here"}</p>
+                <p className="text-xs text-muted-foreground mt-1">MP4, MOV, or ProRes</p>
               </div>
             </div>
 
             <div className="mb-8">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Target Language</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Target Language</label>
               <select 
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500 transition-all"
+                className="w-full border border-border bg-muted/50 rounded-md px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
               >
                 <option value="Spanish">Spanish (Latin America)</option>
                 <option value="French">French</option>
@@ -67,91 +72,83 @@ export default function AutoDubbing() {
                 <option value="Japanese">Japanese</option>
                 <option value="Korean">Korean</option>
                 <option value="Urdu">Urdu</option>
+                <option value="Arabic">Arabic</option>
+                <option value="Turkish">Turkish</option>
               </select>
             </div>
             
             <button 
               type="submit" 
               disabled={loading || !file}
-              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium py-3 px-4 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center border border-emerald-400/30"
+              className="w-full h-12 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
             >
               {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing Pipeline...
-                </>
+                <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing Pipeline...</>
               ) : 'Start Dubbing Pipeline'}
             </button>
           </form>
 
           {loading && (
-            <div className="glass rounded-3xl p-6 border border-emerald-500/20 relative overflow-hidden">
-              <div className="absolute top-0 left-0 h-1 bg-emerald-500 w-full animate-[progress_3.5s_ease-in-out_forwards]"></div>
-              <h3 className="text-emerald-400 font-medium mb-3 flex items-center">
-                <span className="animate-spin mr-2">⚙️</span> Pipeline Active
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="border border-border rounded-xl p-6 bg-background"
+            >
+              <h3 className="text-foreground font-medium mb-4 flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" /> Pipeline Active
               </h3>
-              <ul className="space-y-2 text-sm font-mono text-slate-400">
-                <li className="flex items-center"><span className="text-emerald-500 mr-2">✓</span> Uploading source file...</li>
-                <li className="flex items-center opacity-70"><span className="text-emerald-500 mr-2">✓</span> Extracting audio track...</li>
-                <li className="flex items-center opacity-50"><span className="text-emerald-500 mr-2">✓</span> Transcribing with Whisper...</li>
-                <li className="animate-pulse flex items-center mt-2 text-slate-300">➜ Synthesizing new voice...</li>
+              <ul className="space-y-3 text-sm font-mono text-muted-foreground">
+                <li className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-foreground" /> Uploading source file...</li>
+                <li className="flex items-center opacity-70"><CheckCircle2 className="w-4 h-4 mr-2 text-foreground" /> Extracting audio track...</li>
+                <li className="flex items-center opacity-50"><CheckCircle2 className="w-4 h-4 mr-2 text-foreground" /> Transcribing with Whisper...</li>
+                <li className="animate-pulse flex items-center mt-2 text-foreground">→ Synthesizing new voice...</li>
               </ul>
-              <style dangerouslySetInnerHTML={{__html: `
-                @keyframes progress {
-                  0% { width: 0%; }
-                  50% { width: 60%; }
-                  100% { width: 100%; }
-                }
-              `}} />
-            </div>
+            </motion.div>
           )}
         </div>
 
         <div>
           {!result && !loading && (
-            <div className="h-full min-h-[400px] glass rounded-3xl flex flex-col items-center justify-center border border-slate-700/50 border-dashed bg-slate-900/30">
-              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700 text-2xl">
-                🌐
-              </div>
-              <p className="text-slate-400 font-medium text-center px-8">Upload a video and select a language to see the AI pipeline in action.</p>
+            <div className="h-full min-h-[400px] border border-border border-dashed rounded-xl flex flex-col items-center justify-center bg-background">
+              <Globe className="w-10 h-10 text-muted-foreground mb-4 opacity-40" />
+              <p className="text-muted-foreground font-medium text-center px-8">Upload a video and select a language to see the AI pipeline in action.</p>
             </div>
           )}
 
           {result && (
-            <div className="h-full glass rounded-3xl p-8 border border-emerald-500/30 relative overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.1)] flex flex-col">
-              <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-emerald-500/20 blur-[60px] pointer-events-none"></div>
-              
-              <div className="flex items-center justify-between mb-6 relative z-10">
-                <h3 className="text-2xl font-bold text-white">Dubbing Complete</h3>
-                <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full text-sm font-bold">
-                  {result.confidence_score}% Sync Accuracy
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border border-border rounded-xl p-8 bg-background shadow-sm flex flex-col h-full"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-foreground">Dubbing Complete</h3>
+                <span className="bg-muted border border-border text-foreground px-3 py-1 rounded-full text-sm font-medium">
+                  {result.confidence_score}% Sync
                 </span>
               </div>
 
-              <div className="flex-1 space-y-6 relative z-10">
-                <div className="aspect-video bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700 relative overflow-hidden group cursor-pointer">
-                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 group-hover:scale-110 transition-transform">
-                    <span className="text-white text-2xl ml-1">▶</span>
+              <div className="flex-1 space-y-6">
+                <div className="aspect-video bg-muted rounded-xl flex items-center justify-center border border-border relative overflow-hidden group cursor-pointer">
+                  <div className="w-14 h-14 rounded-full border border-border flex items-center justify-center bg-background group-hover:scale-110 transition-transform">
+                    <Play className="w-5 h-5 text-foreground ml-0.5" />
                   </div>
-                  <div className="absolute bottom-4 left-4 bg-black/60 px-2 py-1 rounded text-xs font-mono text-emerald-400">
+                  <div className="absolute bottom-3 left-3 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-muted-foreground border border-border">
                     {result.output_video}
                   </div>
                 </div>
 
-                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                  <h4 className="text-xs uppercase tracking-widest text-slate-500 mb-2">Translation Preview</h4>
-                  <p className="text-slate-300 italic mb-2">"{result.transcription_preview}"</p>
-                  <p className="text-emerald-400 font-medium">"{result.translation_preview}"</p>
+                <div className="bg-muted/30 p-4 rounded-xl border border-border">
+                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Translation Preview</h4>
+                  <p className="text-foreground italic mb-2">"{result.transcription_preview}"</p>
+                  <p className="text-foreground font-medium">"{result.translation_preview}"</p>
                 </div>
 
                 <div>
-                  <h4 className="text-xs uppercase tracking-widest text-emerald-500 mb-2">Pipeline Logs</h4>
-                  <ul className="space-y-1 text-xs font-mono text-slate-400 bg-slate-900 p-3 rounded-lg border border-slate-800">
+                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Pipeline Logs</h4>
+                  <ul className="space-y-1 text-xs font-mono text-muted-foreground bg-muted p-3 rounded-lg border border-border">
                     {result.pipeline_logs.map((log: string, idx: number) => (
-                      <li key={idx} className="flex"><span className="text-emerald-500 mr-2">&gt;</span> {log}</li>
+                      <li key={idx} className="flex"><span className="text-foreground mr-2">&gt;</span> {log}</li>
                     ))}
                   </ul>
                 </div>
@@ -159,11 +156,11 @@ export default function AutoDubbing() {
               
               <button 
                 onClick={() => setResult(null)}
-                className="mt-6 w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors text-sm font-medium"
+                className="mt-6 w-full py-2 border border-border bg-muted hover:bg-muted/80 text-foreground rounded-md transition-colors text-sm font-medium"
               >
                 Dub Another Video
               </button>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
