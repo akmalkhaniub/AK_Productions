@@ -36,10 +36,14 @@ async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
         except Exception as e:
             return {"status": "error", "message": f"Could not extract subtitles. Ensure the video has closed captions. Error: {str(e)}"}
 
-        # Combine text chunks for the LLM
-        # We only take the first ~100 chunks for cost/time efficiency during testing.
-        # In a real production environment, you would chunk the entire video.
-        raw_text = " ".join([t['text'] for t in transcript[:150]])
+        # Extract text from transcript snippets safely supporting both dict and object formats
+        raw_text_list = []
+        for t in transcript[:150]:
+            if isinstance(t, dict):
+                raw_text_list.append(t.get('text', ''))
+            else:
+                raw_text_list.append(getattr(t, 'text', ''))
+        raw_text = " ".join(raw_text_list)
 
         # Construct System Prompt
         system_prompt = """
