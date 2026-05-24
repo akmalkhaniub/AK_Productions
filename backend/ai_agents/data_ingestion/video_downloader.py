@@ -26,6 +26,22 @@ def download_youtube_video(url: str, max_duration_seconds: int = 0) -> str:
 
         has_ffmpeg = shutil.which('ffmpeg') is not None
 
+        if not has_ffmpeg:
+            # Auto-detect winget installed Gyan.FFmpeg dynamically on Windows
+            packages_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Packages")
+            if os.path.exists(packages_dir):
+                for folder in os.listdir(packages_dir):
+                    if folder.startswith("Gyan.FFmpeg"):
+                        full_build_dir = os.path.join(packages_dir, folder)
+                        if os.path.exists(full_build_dir):
+                            for subfolder in os.listdir(full_build_dir):
+                                if "ffmpeg" in subfolder and os.path.isdir(os.path.join(full_build_dir, subfolder)):
+                                    bin_path = os.path.join(full_build_dir, subfolder, "bin")
+                                    if os.path.exists(bin_path):
+                                        os.environ["PATH"] += os.pathsep + bin_path
+                                        has_ffmpeg = shutil.which('ffmpeg') is not None
+                                        break
+
         if max_duration_seconds > 0:
             if not has_ffmpeg:
                 # Check video duration first
