@@ -1,41 +1,57 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { MotiView } from 'moti';
+import { Sparkles, Clapperboard, Mic2, FileText } from 'lucide-react-native';
 
 export default function Dashboard() {
   const router = useRouter();
 
   const modules = [
-    { id: 'ip-discovery', title: 'IP Discovery', icon: '💡', desc: 'Scan historical databases for remake gems.', color: 'rgba(6, 182, 212, 0.2)', text: '#22d3ee' },
-    { id: 'acting-coach', title: 'Acting Coach', icon: '🎬', desc: 'Extract dialogue and analyze emotion.', color: 'rgba(168, 85, 247, 0.2)', text: '#c084fc' },
-    { id: 'auto-dubbing', title: 'Auto-Dubbing', icon: '🎙️', desc: 'Translate and clone voices instantly.', color: 'rgba(16, 185, 129, 0.2)', text: '#34d399' },
-    { id: 'script-breakdown', title: 'Script Breakdown', icon: '📄', desc: 'Extract props and estimate budgets.', color: 'rgba(245, 158, 11, 0.2)', text: '#fbbf24' },
+    { id: 'ip-discovery', title: 'IP Discovery', icon: Sparkles, desc: 'Scan historical databases for remake gems.', color: 'rgba(6, 182, 212, 0.2)', text: '#22d3ee' },
+    { id: 'acting-coach', title: 'Acting Coach', icon: Clapperboard, desc: 'Extract dialogue and analyze emotion.', color: 'rgba(168, 85, 247, 0.2)', text: '#c084fc' },
+    { id: 'auto-dubbing', title: 'Auto-Dubbing', icon: Mic2, desc: 'Translate and clone voices instantly.', color: 'rgba(16, 185, 129, 0.2)', text: '#34d399' },
+    { id: 'script-breakdown', title: 'Script Breakdown', icon: FileText, desc: 'Extract props and estimate budgets.', color: 'rgba(245, 158, 11, 0.2)', text: '#fbbf24' },
   ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
+      <MotiView 
+        from={{ opacity: 0, translateY: -20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 500 }}
+        style={styles.header}
+      >
         <Text style={styles.title}>Welcome back, Director.</Text>
         <Text style={styles.subtitle}>All agentic modules are online and standing by.</Text>
-      </View>
+      </MotiView>
 
       <View style={styles.grid}>
-        {modules.map((mod) => (
-          <TouchableOpacity 
-            key={mod.id} 
-            activeOpacity={0.8}
-            onPress={() => router.push(`/${mod.id}` as any)}
-          >
-            <BlurView intensity={20} tint="dark" style={[styles.card, { borderColor: mod.color }]}>
-              <View style={[styles.iconContainer, { backgroundColor: mod.color }]}>
-                <Text style={styles.icon}>{mod.icon}</Text>
-              </View>
-              <Text style={styles.cardTitle}>{mod.title}</Text>
-              <Text style={styles.cardDesc}>{mod.desc}</Text>
-              <Text style={[styles.launchText, { color: mod.text }]}>Launch Module →</Text>
-            </BlurView>
-          </TouchableOpacity>
-        ))}
+        {modules.map((mod, index) => {
+          const IconComponent = mod.icon;
+          return (
+            <MotiView 
+              key={mod.id}
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'spring', delay: index * 100, damping: 20, stiffness: 200 }}
+            >
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={() => router.push(`/${mod.id}` as any)}
+              >
+                <BlurView intensity={20} tint="dark" style={[styles.card, { borderColor: mod.color }]}>
+                  <View style={[styles.iconContainer, { backgroundColor: mod.color }]}>
+                    <IconComponent color={mod.text} size={24} />
+                  </View>
+                  <Text style={styles.cardTitle}>{mod.title}</Text>
+                  <Text style={styles.cardDesc}>{mod.desc}</Text>
+                  <Text style={[styles.launchText, { color: mod.text }]}>Launch Module →</Text>
+                </BlurView>
+              </TouchableOpacity>
+            </MotiView>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -80,9 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  icon: {
-    fontSize: 24,
   },
   cardTitle: {
     fontSize: 20,
