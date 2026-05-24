@@ -71,55 +71,46 @@ export default function DataIngestion() {
         <form onSubmit={handleIngest}>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b border-border pb-8">
-            {/* Action Type Selection */}
+            {/* Action Type Selection Dropdown */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-foreground flex items-center"><Zap className="w-4 h-4 mr-2"/> Extraction Mode</h3>
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => setUseGemini(false)}
-                  className={`py-3 px-4 rounded-lg border text-left transition-colors ${!useGemini ? 'border-foreground bg-muted text-foreground' : 'border-border hover:bg-muted/50 bg-background text-muted-foreground'}`}
+              <div className="space-y-2">
+                <select
+                  value={useGemini ? "deep" : "fast"}
+                  onChange={(e) => setUseGemini(e.target.value === "deep")}
+                  className="w-full border border-border bg-muted/50 rounded-md px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all cursor-pointer"
                 >
-                  <span className="font-semibold block text-sm">Fast Transcript Extraction</span>
-                  <span className="text-xs mt-1 block">Uses YouTube Captions for instant text processing.</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUseGemini(true)}
-                  className={`py-3 px-4 rounded-lg border text-left transition-colors ${useGemini ? 'border-foreground bg-muted text-foreground' : 'border-border hover:bg-muted/50 bg-background text-muted-foreground'}`}
-                >
-                  <span className="font-semibold block text-sm">Deep Video Analysis</span>
-                  <span className="text-xs mt-1 block">Downloads MP4 for multimodal visual analysis.</span>
-                </button>
+                  <option value="fast">Fast Transcript Extraction (Captions-based)</option>
+                  <option value="deep">Deep Video Analysis (Multimodal MP4)</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {useGemini 
+                    ? "Downloads the MP4 for visual topography, camera angles, and actor sequence tracking."
+                    : "Uses YouTube Closed Captions for instant trilingual screenplay generation."}
+                </p>
               </div>
             </div>
 
-            {/* Configuration Panel */}
-            <div className="space-y-6">
+            {/* Configuration Panel - AI Model Dropdown */}
+            <div className="space-y-4">
               <h3 className="text-sm font-medium text-foreground flex items-center"><Settings2 className="w-4 h-4 mr-2"/> Configuration</h3>
               
-              <div className="space-y-3">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Model</label>
-                <div className="flex rounded-md shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedModel("openai")}
-                    className={`flex-1 py-2 text-sm font-medium border rounded-l-md transition-colors ${selectedModel === "openai" ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-border hover:bg-muted'}`}
-                  >
-                    OpenAI
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedModel("gemini")}
-                    className={`flex-1 py-2 text-sm font-medium border-t border-b border-r rounded-r-md transition-colors ${selectedModel === "gemini" ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-border hover:bg-muted'}`}
-                  >
-                    Google Gemini
-                  </button>
-                </div>
+              <div className="space-y-2">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full border border-border bg-muted/50 rounded-md px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all cursor-pointer"
+                >
+                  <option value="openai">OpenAI GPT-4o-mini (Cost-efficient)</option>
+                  <option value="gemini">Google Gemini 1.5 Pro (Multimodal)</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Select the underlying LLM to parse and format subtitles/visual actions.
+                </p>
               </div>
 
               {useGemini && (
-                <div className="space-y-3">
+                <div className="space-y-3 mt-4">
                   <div className="flex justify-between items-center">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center"><Clock className="w-3 h-3 mr-1"/> Download Duration Limit</label>
                     <span className="text-xs font-mono bg-muted px-2 py-1 rounded">{duration === 0 ? "Full Video" : `${duration / 60} minutes`}</span>
@@ -131,9 +122,9 @@ export default function DataIngestion() {
                     step="60"
                     value={duration}
                     onChange={(e) => setDuration(parseInt(e.target.value))}
-                    className="w-full accent-foreground"
+                    className="w-full accent-foreground cursor-pointer"
                   />
-                  <p className="text-[10px] text-muted-foreground">To save time and bandwidth, you can limit the downloader to only grab the first few minutes of the video.</p>
+                  <p className="text-[10px] text-muted-foreground">Limit the downloader to the first few minutes of the video to save time and bandwidth.</p>
                 </div>
               )}
             </div>
