@@ -215,12 +215,22 @@ flowchart TD
 
 ---
 
+## 🚀 Future Expansion Proposals
+
+We are actively researching and designing state-of-the-art expansion capabilities for Studio OS:
+1. **[AI Lip-Reading & Dialogue Reconstruction](./LIP_READING_PROPOSAL.md)**: Generate transcripts and synced dialogue tracks from actor lip movements in silent videos or live streams.
+2. **[AI Music-to-Motion Dance Choreography](./DANCE_CHOREOGRAPHY_PROPOSAL.md)**: Automatically suggest dynamic dance choreographies matching any music track.
+
+---
+
 ## Links
 
 | Resource | URL |
 |---|---|
 | 🏠 Repository | [github.com/AK-Productions](https://github.com/) |
 | 📖 README | [README.md](./README.md) |
+| 👄 Lip-Reading Proposal | [LIP_READING_PROPOSAL.md](./LIP_READING_PROPOSAL.md) |
+| 🕺 Dance Choreography Proposal | [DANCE_CHOREOGRAPHY_PROPOSAL.md](./DANCE_CHOREOGRAPHY_PROPOSAL.md) |
 | 🎬 Demo Video | _Coming soon_ |
 
 ---

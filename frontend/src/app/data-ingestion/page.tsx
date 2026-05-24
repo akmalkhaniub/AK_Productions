@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, Search, Loader2, Database, ArrowRight, Zap, PlaySquare, Settings2, Clock } from 'lucide-react';
 import Link from 'next/link';
@@ -12,10 +12,15 @@ export default function DataIngestion() {
   const [error, setError] = useState("");
   const [useGemini, setUseGemini] = useState(false);
   const [step, setStep] = useState(0);
+  const [mounted, setMounted] = useState(false);
   
   // Configuration State
   const [selectedModel, setSelectedModel] = useState("openai");
   const [duration, setDuration] = useState(0); // 0 = full video
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleIngest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +62,15 @@ export default function DataIngestion() {
       setLoading(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="max-w-4xl mx-auto py-10 flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-sm">Initializing Data Ingestion Engine...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-10">

@@ -8,6 +8,8 @@
     <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
     <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
     <a href="./GCP_DEPLOYMENT.md"><strong>🚀 GCP Deployment</strong></a> · 
+    <a href="./LIP_READING_PROPOSAL.md"><strong>👄 Lip-Reading</strong></a> · 
+    <a href="./DANCE_CHOREOGRAPHY_PROPOSAL.md"><strong>🕺 Dance Choreography</strong></a> · 
     <a href="#getting-started"><strong>📦 Getting Started</strong></a>
   </p>
 </p>
@@ -240,6 +242,14 @@ For the full startup narrative — problem statement, market opportunity ($370B)
 - [ ] Batch ingestion (ingest full drama series)
 - [ ] Real-time collaborative annotations
 - [ ] SaaS multi-tenant deployment
+
+---
+
+## 🚀 Future Expansion Proposals
+
+We are actively researching and designing state-of-the-art expansion capabilities for Studio OS:
+1. **[AI Lip-Reading & Dialogue Reconstruction](./LIP_READING_PROPOSAL.md)**: Generate transcripts and synced dialogue tracks from actor lip movements in silent videos or live streams.
+2. **[AI Music-to-Motion Dance Choreography](./DANCE_CHOREOGRAPHY_PROPOSAL.md)**: Automatically suggest dynamic dance choreographies matching any music track.
 
 ---
 
