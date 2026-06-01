@@ -129,7 +129,14 @@ def run_tool_loop(messages, tools, dispatch, max_steps: int = 12, on_attempt=Non
                         args = json.loads(call.function.arguments or "{}")
                     except ValueError:
                         args = {}
-                    kind, value = dispatch(call.function.name, args)
+                    # Tool-error recovery: a failing tool returns an observation
+                    # the model can react to, rather than crashing the loop.
+                    try:
+                        kind, value = dispatch(call.function.name, args)
+                    except Exception as te:
+                        msgs.append({"role": "tool", "tool_call_id": call.id,
+                                     "content": json.dumps({"error": f"Tool '{call.function.name}' failed: {str(te)[:200]}"})})
+                        continue
                     if kind == "done":
                         return {"ok": True, "provider": p.name, "data": value}
                     msgs.append({"role": "tool", "tool_call_id": call.id, "content": value})

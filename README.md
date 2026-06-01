@@ -6,6 +6,7 @@
   </p>
   <p align="center">
     <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
+    <a href="./docs/README.md"><strong>📚 Design Docs</strong></a> · 
     <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
     <a href="./GCP_DEPLOYMENT.md"><strong>🚀 GCP Deployment</strong></a> · 
     <a href="./LIP_READING_PROPOSAL.md"><strong>👄 Lip-Reading</strong></a> · 
@@ -101,7 +102,23 @@ flowchart TD
 | **AI (Text)** | OpenAI GPT-4o-mini (model selectable at runtime) |
 | **Video Pipeline** | yt-dlp · YouTube Transcript API |
 | **Infra** | Google Cloud Platform · Vertex AI (optional) |
-| **Design** | Monochrome enterprise design system · Dark/Light theme · `next-themes` |
+| **Design** | Switchable multi-theme design system (`next-themes` · `data-theme`) |
+
+---
+
+## 📚 Design & Architecture Docs
+
+Every significant design decision is recorded in [`docs/`](./docs/README.md):
+
+| Doc | Covers |
+|---|---|
+| [Architecture](./docs/01-architecture.md) | System shape, agent roster, request flow |
+| [Agentic Patterns](./docs/02-agentic-patterns.md) | Tool-loops, error recovery, guardrails, reflection, orchestration |
+| [LLM Fallback Chain](./docs/03-llm-fallback-chain.md) | Multi-provider router; cost vs capability routing |
+| [Model Configuration](./docs/04-model-configuration.md) | Centralized config + runtime admin panel |
+| [Studio Intelligence](./docs/05-studio-intelligence.md) | YouTube digest agent design |
+| [Design System](./docs/06-design-system.md) | Switchable multi-theme UI |
+| [Decision Log (ADRs)](./docs/07-decision-log.md) | Chronological decisions + trade-offs |
 
 ---
 

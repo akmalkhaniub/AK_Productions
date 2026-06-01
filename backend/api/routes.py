@@ -13,6 +13,7 @@ from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
 from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
 from ai_agents.industry_intel import youtube_source, intel_agent, delivery
+from ai_agents.orchestrator.showrunner import run_showrunner
 from core import llm
 
 router = APIRouter()
@@ -343,6 +344,15 @@ _SAMPLE_SCRIPT = {
         {"speaker": "STATION GUARD", "dialogue": {"urdu_script": "لاہور کی آخری ٹرین، پلیٹ فارم نمبر دو!", "roman_urdu": "Lahore ki aakhri train, platform number do!", "english": "Last train to Lahore — platform two!"}},
     ],
 }
+
+# --- Showrunner (orchestrator agent) ---
+
+class ShowrunnerRequest(BaseModel):
+    goal: str
+
+@router.post("/showrunner/run")
+def showrunner_run(request: ShowrunnerRequest, db: Session = Depends(get_db)):
+    return run_showrunner(request.goal, db)
 
 @router.post("/dev/seed-sample-script")
 def seed_sample_script(db: Session = Depends(get_db)):

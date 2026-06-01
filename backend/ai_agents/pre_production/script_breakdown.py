@@ -13,7 +13,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from core import llm
+from core import llm, schemas
 from core.models import DramaScript
 
 MAX_STEPS = 8
@@ -143,6 +143,7 @@ def parse_and_breakdown(filename: str = "", db: Session = None, script_id: int =
     ]
 
     trace: list[str] = []
+    last_script_json = {"value": ""}  # captured for the reflection step
 
     def dispatch(name, args):
         if name == "list_library_scripts":
@@ -151,18 +152,25 @@ def parse_and_breakdown(filename: str = "", db: Session = None, script_id: int =
         if name == "get_script":
             sid = int(args.get("script_id", 0))
             trace.append(f"Read full script content for script #{sid}")
-            return ("result", _tool_get_script(db, sid))
+            content = _tool_get_script(db, sid)
+            last_script_json["value"] = content
+            return ("result", content)
         if name == "submit_breakdown":
+            # Guardrail: validate the model's output before accepting it.
+            valid, err = schemas.validate(schemas.ScriptBreakdownResult, args)
+            if err:
+                trace.append(f"Rejected invalid breakdown ({err}); asking agent to fix")
+                return ("result", json.dumps({"validation_error": err, "hint": "Fix these fields and call submit_breakdown again."}))
             trace.append("Submitted final production breakdown")
-            elements = args.get("elements", [])
+            elements = [e.model_dump() for e in valid.elements]
             for i, el in enumerate(elements, start=1):
                 el["id"] = i
             return ("done", {
                 "status": "Completed",
-                "script_title": args.get("script_title", "Untitled Script"),
-                "total_scenes": args.get("total_scenes", 0),
-                "speaking_roles": args.get("speaking_roles", 0),
-                "estimated_budget_range": args.get("estimated_budget_range", "N/A"),
+                "script_title": valid.script_title,
+                "total_scenes": valid.total_scenes,
+                "speaking_roles": valid.speaking_roles,
+                "estimated_budget_range": valid.estimated_budget_range,
                 "elements": elements,
                 "agent_trace": trace,
             })
@@ -170,13 +178,53 @@ def parse_and_breakdown(filename: str = "", db: Session = None, script_id: int =
 
     result = llm.run_tool_loop(messages, TOOLS, dispatch, max_steps=MAX_STEPS,
                                on_attempt=lambda _p: trace.clear())
-    if result["ok"]:
-        data = result["data"]
-        data["agent_trace"] = data.get("agent_trace", []) + [f"Completed via {result['provider']}"]
+    if not result["ok"]:
+        print(f"Script Breakdown agent failed across providers: {result.get('errors')}")
+        return _mock_breakdown(filename)
+
+    data = result["data"]
+    data["agent_trace"] = data.get("agent_trace", []) + [f"Completed via {result['provider']}"]
+
+    # Reflexion: a critic checks the breakdown against the real script and the
+    # agent revises once if needed. Visible quality bump, bounded to 1 pass.
+    data = _reflect_and_maybe_revise(data, last_script_json["value"], messages, dispatch, trace)
+    return data
+
+
+def _reflect_and_maybe_revise(data, script_json, messages, dispatch, trace):
+    """One self-critique + revision pass (Reflexion pattern)."""
+    if not script_json:
+        return data
+    try:
+        critic_prompt = (
+            "You are a meticulous line-producer QA reviewer. Given the SCRIPT and a draft "
+            "BREAKDOWN, decide if the breakdown is accurate and complete (does it cover the "
+            "real characters/props/locations? are budgets plausible? any obvious omissions?).\n\n"
+            f"SCRIPT:\n{script_json}\n\nBREAKDOWN:\n{json.dumps(data)}\n\n"
+            'Return JSON: {"needs_revision": bool, "issues": [string], "guidance": string}'
+        )
+        content, _ = llm.chat_json([{"role": "user", "content": critic_prompt}])
+        critique = json.loads(content)
+    except Exception:
+        return data  # reflection is best-effort
+
+    if not critique.get("needs_revision"):
+        data["agent_trace"].append("Critic reviewed the breakdown — no revision needed")
         return data
 
-    print(f"Script Breakdown agent failed across providers: {result.get('errors')}")
-    return _mock_breakdown(filename)
+    trace.append(f"Critic flagged issues: {', '.join(critique.get('issues', []))[:160]}")
+    revise_messages = messages + [
+        {"role": "user", "content": (
+            "A reviewer flagged issues with your breakdown:\n"
+            f"{json.dumps(critique)}\n\nRevise and call submit_breakdown again with the improved breakdown."
+        )},
+    ]
+    revised = llm.run_tool_loop(revise_messages, TOOLS, dispatch, max_steps=MAX_STEPS)
+    if revised["ok"]:
+        out = revised["data"]
+        out["agent_trace"] = out.get("agent_trace", []) + [f"Revised after critic ({revised['provider']})"]
+        return out
+    return data
 
 
 def _mock_breakdown(filename: str):

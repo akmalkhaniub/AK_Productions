@@ -14,7 +14,7 @@ admin panel):
 import datetime
 import json
 
-from core import config, settings_service, llm
+from core import config, settings_service, llm, schemas
 from . import youtube_source
 
 MAX_STEPS = 14
@@ -135,8 +135,12 @@ def _run_openai(channels: list[dict]) -> dict:
             trace.append(f"Read transcript for video {vid}")
             return ("result", json.dumps({"video_id": vid, "transcript": get_transcript(vid)}))
         if name == "submit_brief":
+            valid, err = schemas.validate(schemas.IntelBriefResult, args)
+            if err:
+                trace.append(f"Rejected invalid brief ({err}); asking agent to fix")
+                return ("result", json.dumps({"validation_error": err, "hint": "Fix and call submit_brief again."}))
             trace.append("Composed daily brief")
-            return ("done", _finalize(args, trace))
+            return ("done", _finalize(valid.model_dump(), trace))
         return ("result", json.dumps({"error": f"Unknown tool {name}"}))
 
     result = llm.run_tool_loop(messages, TOOLS, dispatch, max_steps=MAX_STEPS,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check } from "lucide-react";
+import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check, Network } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -31,6 +31,7 @@ export function Header() {
 
   const navLinks = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Showrunner", href: "/showrunner", icon: Network },
     { name: "Data Ingestion", href: "/data-ingestion", icon: Sparkles },
     { name: "Library", href: "/library", icon: FileText },
     { name: "IP Discovery", href: "/ip-discovery", icon: Sparkles },
