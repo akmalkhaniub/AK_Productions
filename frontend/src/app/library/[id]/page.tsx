@@ -35,7 +35,7 @@ export default function ScriptViewer() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
         <p className="text-muted-foreground">Loading Studio Viewer...</p>
       </div>
     );

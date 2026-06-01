@@ -140,7 +140,7 @@ export default function ScriptBreakdown() {
 
       {loading && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border border-border rounded-xl p-16 flex flex-col items-center justify-center bg-background min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
           <h3 className="text-lg font-medium text-foreground">Agent working…</h3>
           <p className="text-muted-foreground mt-2 text-sm">Browsing the Library, reading the script, and identifying production elements.</p>
         </motion.div>

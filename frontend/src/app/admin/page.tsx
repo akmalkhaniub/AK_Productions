@@ -89,7 +89,7 @@ export default function AdminPanel() {
 
       {loading && (
         <div className="min-h-[300px] border border-border rounded-xl flex flex-col items-center justify-center bg-background">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
           <p className="text-muted-foreground">Loading current configuration...</p>
         </div>
       )}

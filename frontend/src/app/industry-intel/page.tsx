@@ -135,7 +135,7 @@ function IndustryIntelInner() {
 
       {running && (
         <div className="border border-border rounded-xl p-12 flex flex-col items-center justify-center bg-background">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
           <p className="text-foreground font-medium">Agent scanning channels…</p>
           <p className="text-muted-foreground text-sm mt-1">Reading RSS feeds, transcripts, and composing the brief.</p>
         </div>

@@ -164,7 +164,7 @@ export default function ActingCoach() {
           animate={{ opacity: 1 }}
           className="border border-border rounded-xl p-16 flex flex-col items-center justify-center bg-background min-h-[400px]"
         >
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
           <h3 className="text-lg font-medium text-foreground">Gemini 1.5 Pro is analyzing the performance...</h3>
           <p className="text-muted-foreground mt-2 text-sm max-w-md text-center">
             The Acting Coach agent is reading the script from the Library database and comparing it against the actor's delivery.

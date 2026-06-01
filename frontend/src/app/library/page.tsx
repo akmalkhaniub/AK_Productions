@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Search, Loader2, PlaySquare, Video, ArrowLeft } from 'lucide-react';
+import { Database, Search, Loader2, PlaySquare, Video, ArrowLeft, Sparkles } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
@@ -11,25 +11,37 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
-  useEffect(() => {
-    const fetchLibrary = async () => {
-      try {
-        const res = await fetch(apiUrl('/api/library'));
-        const data = await res.json();
-        if (data.status === 'success') {
-          setScripts(data.data);
-        } else {
-          setError(data.message || "Failed to load library.");
-        }
-      } catch (err) {
-        setError("Network error. Backend might be offline.");
-      } finally {
-        setLoading(false);
+  const fetchLibrary = async () => {
+    try {
+      const res = await fetch(apiUrl('/api/library'));
+      const data = await res.json();
+      if (data.status === 'success') {
+        setScripts(data.data);
+      } else {
+        setError(data.message || "Failed to load library.");
       }
-    };
-    fetchLibrary();
-  }, []);
+    } catch (err) {
+      setError("Network error. Backend might be offline.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const seedSample = async () => {
+    setSeeding(true);
+    try {
+      await fetch(apiUrl('/api/dev/seed-sample-script'), { method: 'POST' });
+      await fetchLibrary();
+    } catch {
+      setError("Could not seed sample script.");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  useEffect(() => { fetchLibrary(); }, []);
 
   const filteredScripts = scripts.filter(s => 
     s.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -46,13 +58,24 @@ export default function Library() {
           </h1>
           <p className="text-muted-foreground">All your ingested YouTube dramas and extracted screenplays, securely saved in PostgreSQL.</p>
         </div>
-        <Link 
-          href="/data-ingestion"
-          className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Ingestion
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={seedSample}
+            disabled={seeding}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-accent/30 bg-accent/10 text-accent px-4 text-sm font-medium transition-colors hover:bg-accent/20 disabled:opacity-50"
+            title="Insert a sample trilingual script for previewing the viewer & breakdown agent"
+          >
+            {seeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            Seed sample (dev)
+          </button>
+          <Link
+            href="/data-ingestion"
+            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Ingestion
+          </Link>
+        </div>
       </header>
 
       <div className="relative mb-8 max-w-md">
@@ -68,7 +91,7 @@ export default function Library() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 border border-border rounded-xl bg-background">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
           <p className="text-muted-foreground">Loading Master Database...</p>
         </div>
       ) : error ? (
@@ -80,12 +103,22 @@ export default function Library() {
           <Database className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
           <h3 className="text-lg font-medium text-foreground mb-1">Library is Empty</h3>
           <p className="text-muted-foreground mb-6">You haven't ingested any YouTube scripts yet, or your search didn't match anything.</p>
-          <Link 
-            href="/data-ingestion"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-accent text-accent-foreground px-6 text-sm font-medium hover:bg-accent/90 transition-colors"
-          >
-            Start Ingesting
-          </Link>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/data-ingestion"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-accent text-accent-foreground px-6 text-sm font-medium hover:bg-accent/90 transition-colors"
+            >
+              Start Ingesting
+            </Link>
+            <button
+              onClick={seedSample}
+              disabled={seeding}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-6 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {seeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              Seed a sample script
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

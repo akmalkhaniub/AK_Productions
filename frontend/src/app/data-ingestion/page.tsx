@@ -83,7 +83,7 @@ export default function DataIngestion() {
   if (!mounted) {
     return (
       <div className="max-w-4xl mx-auto py-10 flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
         <p className="text-muted-foreground text-sm">Initializing Data Ingestion Engine...</p>
       </div>
     );

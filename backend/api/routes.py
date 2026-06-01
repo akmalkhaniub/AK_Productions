@@ -323,3 +323,38 @@ def intel_latest(db: Session = Depends(get_db)):
     if not record:
         return {"status": "success", "data": None}
     return {"status": "success", "data": json.loads(record.content)}
+
+# --- Dev convenience: seed a sample script (so the viewer / breakdown can be
+#     demoed without spending an ingestion/LLM call) ---
+
+_SAMPLE_SCRIPT = {
+    "title": "The Last Letter",
+    "scene_description": "A rain-soaked night at a dim railway platform. AYESHA confronts her estranged father IMRAN as the last train looms; a vintage pocket watch changes hands.",
+    "characters_identified": ["AYESHA", "IMRAN", "STATION GUARD"],
+    "actor_sequences": [
+        {"character": "AYESHA", "appearance_timestamps": "00:00 - 01:40", "visual_actions": "Steps off the bench, walks toward Imran through the rain, clutches a folded letter."},
+        {"character": "IMRAN", "appearance_timestamps": "00:20 - 02:10", "visual_actions": "Stands under the platform light, hands over a pocket watch, looks away as the train approaches."},
+    ],
+    "script": [
+        {"speaker": "AYESHA", "dialogue": {"urdu_script": "تم نے ہمیں بارش میں چھوڑ دیا تھا، بالکل آج کی رات کی طرح۔", "roman_urdu": "Tum ne humein barish mein chhor diya tha, bilkul aaj ki raat ki tarah.", "english": "You left us in the rain — just like tonight."}},
+        {"speaker": "IMRAN", "dialogue": {"urdu_script": "میں نے تمہاری ماں کی گھڑی سنبھال کر رکھی۔ یہ آج بھی چلتی ہے۔", "roman_urdu": "Main ne tumhari maa ki ghari sambhaal kar rakhi. Yeh aaj bhi chalti hai.", "english": "I kept your mother's watch. It still runs."}},
+        {"speaker": "STATION GUARD", "dialogue": {"urdu_script": "لاہور کی آخری ٹرین، پلیٹ فارم نمبر دو!", "roman_urdu": "Lahore ki aakhri train, platform number do!", "english": "Last train to Lahore — platform two!"}},
+    ],
+}
+
+@router.post("/dev/seed-sample-script")
+def seed_sample_script(db: Session = Depends(get_db)):
+    existing = db.query(DramaScript).filter(DramaScript.video_id == "SAMPLE_LAST_LETTER").first()
+    if existing:
+        return {"status": "success", "data": {"id": existing.id, "created": False}}
+    rec = DramaScript(
+        video_id="SAMPLE_LAST_LETTER",
+        title=_SAMPLE_SCRIPT["title"],
+        scene_description=_SAMPLE_SCRIPT["scene_description"],
+        characters_identified=",".join(_SAMPLE_SCRIPT["characters_identified"]),
+        script_content=json.dumps(_SAMPLE_SCRIPT),
+    )
+    db.add(rec)
+    db.commit()
+    db.refresh(rec)
+    return {"status": "success", "data": {"id": rec.id, "created": True}}
