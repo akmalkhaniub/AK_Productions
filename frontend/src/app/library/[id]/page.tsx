@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, PlaySquare, Video, FileText } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function ScriptViewer() {
@@ -15,7 +16,7 @@ export default function ScriptViewer() {
   useEffect(() => {
     const fetchScript = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/library/${params.id}`);
+        const res = await fetch(apiUrl(`/api/library/${params.id}`));
         const data = await res.json();
         if (data.status === 'success') {
           setScript(data.data);

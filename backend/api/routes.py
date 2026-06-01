@@ -8,6 +8,7 @@ from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
 from core.models import Project, DramaScript
+from core import config, settings_service
 from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
 from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
@@ -174,3 +175,41 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 def get_projects(db: Session = Depends(get_db)):
     projects = db.query(Project).all()
     return {"status": "success", "data": projects}
+
+# --- Admin: runtime model/configuration ---
+
+# Choices surfaced as dropdowns in the admin panel.
+MODEL_OPTIONS = {
+    "gemini_model": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"],
+    "openai_model": ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
+    "ingestion_model": ["openai", "gemini"],
+}
+
+class SettingsUpdate(BaseModel):
+    gemini_model: str | None = None
+    openai_model: str | None = None
+    ingestion_model: str | None = None
+
+@router.get("/admin/settings")
+def get_admin_settings():
+    return {
+        "status": "success",
+        "data": {
+            "settings": settings_service.get_settings(),
+            "options": MODEL_OPTIONS,
+            "defaults": config.DEFAULT_SETTINGS,
+            "gemini_backend": "vertex" if config.GEMINI_USE_VERTEX else "developer",
+            "gemini_key_present": bool(config.GEMINI_API_KEY),
+            "openai_key_present": bool(config.OPENAI_API_KEY),
+        },
+    }
+
+@router.put("/admin/settings")
+def update_admin_settings(payload: SettingsUpdate, db: Session = Depends(get_db)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    # Reject values outside the known option lists.
+    for key, value in updates.items():
+        if key in MODEL_OPTIONS and value not in MODEL_OPTIONS[key]:
+            return {"status": "error", "message": f"Invalid value '{value}' for {key}"}
+    settings = settings_service.update_settings(db, updates)
+    return {"status": "success", "data": {"settings": settings}}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, Search, Loader2, Database, ArrowRight, Zap, PlaySquare, Settings2, Clock } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function DataIngestion() {
@@ -51,7 +52,7 @@ export default function DataIngestion() {
       setStep(prev => prev + 1);
     }, useGemini ? 7000 : 2000);
 
-    const endpoint = useGemini ? 'http://localhost:8000/api/analyze-video' : 'http://localhost:8000/api/ingest-youtube';
+    const endpoint = useGemini ? apiUrl('/api/analyze-video') : apiUrl('/api/ingest-youtube');
 
     try {
       const res = await fetch(endpoint, {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Loader2, Upload, DollarSign } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 export default function ScriptBreakdown() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function ScriptBreakdown() {
       setResult(null);
       
       try {
-        const res = await fetch('http://localhost:8000/api/script-breakdown', {
+        const res = await fetch(apiUrl('/api/script-breakdown'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: e.target.files[0].name })

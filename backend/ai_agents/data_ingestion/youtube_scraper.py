@@ -2,14 +2,13 @@ import os
 import json
 from youtube_transcript_api import YouTubeTranscriptApi
 from openai import AsyncOpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-from google import genai
 from google.genai import types
+
+from core import config
+from core.genai_client import get_genai_client
+from core import settings_service
+
+client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 
 async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
     """
@@ -75,19 +74,21 @@ async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
         """
 
         if model_override == "gemini":
-            print("Routing text parsing to Gemini 1.5 Pro via Vertex AI...")
-            g_client = genai.Client(vertexai=True, project="agentic-portfolio-496720", location="us-central1")
+            gemini_model = settings_service.get("gemini_model") or config.GEMINI_MODEL
+            print(f"Routing text parsing to {gemini_model}...")
+            g_client = get_genai_client()
             response = g_client.models.generate_content(
-                model='gemini-1.5-pro',
+                model=gemini_model,
                 contents=[system_prompt + f"\n\nHere is the raw transcript:\n\n{raw_text}"],
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
             structured_data = json.loads(response.text)
         else:
-            print("Routing text parsing to OpenAI GPT-4o-mini...")
+            openai_model = settings_service.get("openai_model") or config.OPENAI_MODEL
+            print(f"Routing text parsing to {openai_model}...")
             # Call OpenAI
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=openai_model,
                 response_format={ "type": "json_object" },
                 messages=[
                     {"role": "system", "content": system_prompt},

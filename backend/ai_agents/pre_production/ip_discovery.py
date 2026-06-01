@@ -1,11 +1,11 @@
 import random
 import time
-import os
 import json
-from dotenv import load_dotenv
 
-load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+from core import config
+from core import settings_service
+
+OPENAI_API_KEY = config.OPENAI_API_KEY
 
 def discover_ip_remake(genre: str, era: str) -> dict:
     """
@@ -16,11 +16,12 @@ def discover_ip_remake(genre: str, era: str) -> dict:
         try:
             from openai import OpenAI
             client = OpenAI(api_key=OPENAI_API_KEY)
-            
+            model = settings_service.get("openai_model") or config.OPENAI_MODEL
+
             prompt = f"You are a Hollywood executive AI. The user wants to discover a forgotten {genre} IP from the {era} to remake for modern audiences. Provide a JSON response with the following keys: 'original_title', 'year', 'logline', 'modern_twist', 'why_now', and a 'match_score' (1-100)."
-            
+
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )

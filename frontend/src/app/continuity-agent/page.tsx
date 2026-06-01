@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { UploadCloud, CheckCircle2, AlertCircle, Play } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 import { motion } from 'framer-motion';
 
 export default function ContinuityAgent() {
@@ -16,7 +17,7 @@ export default function ContinuityAgent() {
       setResult(null);
       
       try {
-        const res = await fetch('http://localhost:8000/api/check-continuity', {
+        const res = await fetch(apiUrl('/api/check-continuity'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: e.target.files[0].name })

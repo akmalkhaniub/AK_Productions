@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Globe, Loader2, Play, CheckCircle2 } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 export default function AutoDubbing() {
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function AutoDubbing() {
     setResult(null);
     
     try {
-      const res = await fetch('http://localhost:8000/api/auto-dub', {
+      const res = await fetch(apiUrl('/api/auto-dub'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, target_language: language })

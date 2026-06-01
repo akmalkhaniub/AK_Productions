@@ -1,26 +1,33 @@
 import os
 import time
 import json
-from google import genai
 from google.genai import types
-from dotenv import load_dotenv
 
-load_dotenv()
+from core import config
+from core.genai_client import get_genai_client, supports_file_upload
+from core import settings_service
+
 
 async def analyze_video_with_gemini(video_path: str):
     """
-    Uploads a local MP4 to Google Gemini 1.5 Pro via Vertex AI on GCP, waits for processing,
-    and extracts structured data (dialogues, actor timestamps, scenes).
+    Uploads a local MP4 to Google Gemini (via the Files API), waits for
+    processing, and extracts structured data (dialogues, actor timestamps,
+    scenes). The model is configurable from the admin panel.
     """
     try:
-        # Initialize the client using Vertex AI backend with the user's GCP project
-        # This automatically uses Application Default Credentials (gcloud auth)
-        client = genai.Client(
-            vertexai=True, 
-            project="agentic-portfolio-496720", 
-            location="us-central1"
-        )
-        
+        # Video upload requires the Files API, which is Developer-API only.
+        if not supports_file_upload():
+            return {
+                "status": "error",
+                "message": (
+                    "Video analysis requires the Gemini Developer API (Files API). "
+                    "Set GEMINI_USE_VERTEX=false and provide a GEMINI_API_KEY."
+                ),
+            }
+
+        model = settings_service.get("gemini_model") or config.GEMINI_MODEL
+        client = get_genai_client()
+
         # 1. Upload the file to Gemini
         print(f"Uploading {video_path} to Gemini...")
         video_file = client.files.upload(file=video_path)
@@ -64,9 +71,9 @@ async def analyze_video_with_gemini(video_path: str):
         }
         """
         
-        print("Prompting Gemini 1.5 Pro...")
+        print(f"Prompting {model}...")
         response = client.models.generate_content(
-            model='gemini-1.5-pro',
+            model=model,
             contents=[video_file, prompt],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",

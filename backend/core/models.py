@@ -38,6 +38,17 @@ class AgentLog(Base):
 
     project = relationship("Project", back_populates="logs")
 
+class AppSetting(Base):
+    """Key/value store for admin-configurable runtime settings (e.g. which
+    model each agent uses). Read through settings_service, which caches and
+    falls back to config.DEFAULT_SETTINGS."""
+    __tablename__ = "app_settings"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+
 class DramaScript(Base):
     __tablename__ = "drama_scripts"
 

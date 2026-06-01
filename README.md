@@ -20,7 +20,7 @@
 
 AK Productions is a **multi-agent AI platform** for film & television production. Instead of one monolithic chatbot, it deploys a network of **6 specialized AI agents** — each purpose-built for a specific production workflow — that share a persistent PostgreSQL knowledge base.
 
-The platform's flagship capability is its **Multimodal Data Ingestion Engine**: paste a YouTube URL, and the system will download the video, feed it to **Google Gemini 1.5 Pro** (via Vertex AI), and automatically generate a structured, trilingual screenplay — complete with actor timestamps, scene topography, and camera angle descriptions.
+The platform's flagship capability is its **Multimodal Data Ingestion Engine**: paste a YouTube URL, and the system will download the video, feed it to **Google Gemini 2.5 Pro** (via Vertex AI), and automatically generate a structured, trilingual screenplay — complete with actor timestamps, scene topography, and camera angle descriptions.
 
 > **Target Submission:** [Google for Startups: AI Agents Challenge 2026](https://devpost.com) — Deadline June 5, 2026
 
@@ -30,9 +30,9 @@ The platform's flagship capability is its **Multimodal Data Ingestion Engine**: 
 
 | Feature | Description |
 |---|---|
-| 🎬 **Multimodal Video Analysis** | Download YouTube videos and feed them directly to Gemini 1.5 Pro. The model watches the video and extracts dialogue, actor sequences, scene layouts, and camera angles — all in one pass. |
+| 🎬 **Multimodal Video Analysis** | Download YouTube videos and feed them directly to Gemini 2.5 Pro. The model watches the video and extracts dialogue, actor sequences, scene layouts, and camera angles — all in one pass. |
 | 🌐 **Trilingual Script Output** | Every line of dialogue is structured in **Urdu Script (اردو)**, **Roman Urdu**, and **English** simultaneously. |
-| 🔀 **Model-Agnostic AI** | Switch between **OpenAI GPT-4o-mini** and **Google Gemini 1.5 Pro** directly from the UI. Use the right model for the right job. |
+| 🔀 **Model-Agnostic AI** | Switch between **OpenAI GPT-4o-mini** and **Google Gemini 2.5 Pro** directly from the UI. Use the right model for the right job. |
 | 📚 **Persistent Script Library** | All extracted screenplays are saved to PostgreSQL. Browse, search, and revisit any script from the Library dashboard. |
 | 🖥 **Studio Script Viewer** | Split-screen view: embedded YouTube player on the left, synced screenplay on the right. Read the script as you watch the scene. |
 | ⏱ **Configurable Duration** | Don't download a 2-hour movie to test one scene. Set a duration limit (e.g., first 5 minutes) from the UI. |
@@ -65,7 +65,7 @@ flowchart TD
     end
 
     subgraph AI["AI Model Layer"]
-        G["Gemini 1.5 Pro — Vertex AI"]
+        G["Gemini 2.5 Pro — Vertex AI"]
         O["OpenAI GPT-4o-mini"]
     end
 
@@ -96,10 +96,10 @@ flowchart TD
 | **Mobile** | Expo SDK 56 · React Native · Moti · Reanimated |
 | **Backend** | FastAPI · Python 3.14 · Pydantic · SQLAlchemy |
 | **Database** | PostgreSQL |
-| **AI (Multimodal)** | Google Gemini 1.5 Pro via Vertex AI (GCP) |
-| **AI (Text)** | OpenAI GPT-4o-mini |
+| **AI (Multimodal)** | Google Gemini 2.5 Pro (Developer API; Vertex AI optional) |
+| **AI (Text)** | OpenAI GPT-4o-mini (model selectable at runtime) |
 | **Video Pipeline** | yt-dlp · YouTube Transcript API |
-| **Infra** | Google Cloud Platform · Vertex AI |
+| **Infra** | Google Cloud Platform · Vertex AI (optional) |
 | **Design** | Monochrome enterprise design system · Dark/Light theme · `next-themes` |
 
 ---
@@ -145,9 +145,26 @@ Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/ak_productions
 OPENAI_API_KEY=sk-your-openai-key
+
+# Gemini Developer API key — required for multimodal video analysis.
+# Get one free at https://aistudio.google.com/apikey
+GEMINI_API_KEY=your-gemini-key
+
+# Comma-separated frontend origins allowed to call the API
+CORS_ORIGINS=http://localhost:3000
+
+# Optional: set true to use Vertex AI instead (text only — video analysis is
+# disabled on Vertex because the Files API is unavailable there)
+# GEMINI_USE_VERTEX=true
+# GCP_PROJECT=your-gcp-project
 ```
 
-> **Note:** Gemini 1.5 Pro authenticates automatically via your local GCP credentials (Vertex AI). No separate API key needed.
+And `frontend/.env.local` (points the web app at the backend):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+> **Models are configurable at runtime** from the **Admin** panel (`/admin`) — no redeploy needed. Defaults live in `backend/core/config.py`.
 
 ### 2. Backend
 
@@ -200,7 +217,7 @@ AK_Productions/
 │       ├── data_ingestion/
 │       │   ├── youtube_scraper.py      # Transcript extraction + LLM
 │       │   ├── video_downloader.py     # yt-dlp video download
-│       │   └── gemini_analyzer.py      # Gemini 1.5 Pro multimodal
+│       │   └── gemini_analyzer.py      # Gemini 2.5 Pro multimodal
 │       ├── pre_production/
 │       │   ├── ip_discovery.py
 │       │   └── script_breakdown.py
@@ -233,7 +250,7 @@ For the full startup narrative — problem statement, market opportunity ($370B)
 
 - [x] Multi-agent FastAPI architecture (6 agents)
 - [x] YouTube ingestion pipeline (yt-dlp + transcripts)
-- [x] Gemini 1.5 Pro multimodal video analysis (Vertex AI)
+- [x] Gemini 2.5 Pro multimodal video analysis (Vertex AI)
 - [x] Model-agnostic UI (OpenAI ↔ Gemini switcher)
 - [x] PostgreSQL persistence + searchable Library
 - [x] Studio Script Viewer (split-screen video + screenplay)
@@ -261,5 +278,5 @@ MIT
 
 <p align="center">
   <strong>AK Productions</strong> — Where AI meets cinema.<br/>
-  <em>Built with ❤️ using Gemini 1.5 Pro, OpenAI, FastAPI, Next.js, and PostgreSQL.</em>
+  <em>Built with ❤️ using Gemini 2.5 Pro, OpenAI, FastAPI, Next.js, and PostgreSQL.</em>
 </p>

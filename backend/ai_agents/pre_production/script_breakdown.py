@@ -1,10 +1,10 @@
 import time
-import os
 import json
-from dotenv import load_dotenv
 
-load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+from core import config
+from core import settings_service
+
+OPENAI_API_KEY = config.OPENAI_API_KEY
 
 def parse_and_breakdown(filename: str):
     """
@@ -17,15 +17,16 @@ def parse_and_breakdown(filename: str):
         try:
             from openai import OpenAI
             client = OpenAI(api_key=OPENAI_API_KEY)
-            
+            model = settings_service.get("openai_model") or config.OPENAI_MODEL
+
             prompt = f"You are an expert Hollywood line producer. I have a script titled '{title}'. Generate a simulated script breakdown with 5 key production elements (Cast, Props, Wardrobe, Vehicles, VFX) and an estimated budget range. Return JSON matching this structure: {{'script_title': str, 'total_scenes': int, 'speaking_roles': int, 'estimated_budget_range': str, 'elements': [{{'id': int, 'category': str, 'item': str, 'scene': str, 'cost_est': str, 'notes': str}}]}}"
             
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             result["status"] = "Completed"
             return result

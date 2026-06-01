@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mic2, Loader2, ArrowRight, Database, FileText, BarChart3, AlertTriangle } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function ActingCoach() {
@@ -19,7 +20,7 @@ export default function ActingCoach() {
   useEffect(() => {
     const fetchScripts = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/library');
+        const res = await fetch(apiUrl('/api/library'));
         const data = await res.json();
         if (data.status === 'success') setScripts(data.data);
       } catch (err) {
@@ -41,7 +42,7 @@ export default function ActingCoach() {
     setResult(null);
 
     try {
-      const res = await fetch('http://localhost:8000/api/analyze-performance', {
+      const res = await fetch(apiUrl('/api/analyze-performance'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

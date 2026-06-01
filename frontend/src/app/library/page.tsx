@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Database, Search, Loader2, PlaySquare, Video, ArrowLeft } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function Library() {
@@ -14,7 +15,7 @@ export default function Library() {
   useEffect(() => {
     const fetchLibrary = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/library');
+        const res = await fetch(apiUrl('/api/library'));
         const data = await res.json();
         if (data.status === 'success') {
           setScripts(data.data);

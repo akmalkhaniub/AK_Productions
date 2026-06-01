@@ -1,10 +1,10 @@
 import os
 import json
-from google import genai
 from google.genai import types
-from dotenv import load_dotenv
 
-load_dotenv()
+from core import config
+from core.genai_client import get_genai_client
+from core import settings_service
 
 def analyze_audio_performance(filename: str, script_data: dict = None):
     """
@@ -72,14 +72,11 @@ def analyze_audio_performance(filename: str, script_data: dict = None):
         """
     
     try:
-        client = genai.Client(
-            vertexai=True,
-            project="agentic-portfolio-496720",
-            location="us-central1"
-        )
-        
+        model = settings_service.get("gemini_model") or config.GEMINI_MODEL
+        client = get_genai_client()
+
         response = client.models.generate_content(
-            model='gemini-1.5-pro',
+            model=model,
             contents=[prompt],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"

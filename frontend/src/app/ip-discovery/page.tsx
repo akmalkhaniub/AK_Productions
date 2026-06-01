@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Loader2, Sparkles, Film, TrendingUp } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 export default function IPDiscovery() {
   const [genre, setGenre] = useState('');
@@ -16,7 +17,7 @@ export default function IPDiscovery() {
     setPitch(null);
     
     try {
-      const res = await fetch('http://localhost:8000/api/discover-ip', {
+      const res = await fetch(apiUrl('/api/discover-ip'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ genre, era })

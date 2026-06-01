@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Sun, Moon, LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight } from "lucide-react";
+import { Sun, Moon, LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,6 +24,7 @@ export function Header() {
     { name: "Auto-Dubbing", href: "/auto-dubbing", icon: Mic2 },
     { name: "Script Breakdown", href: "/script-breakdown", icon: FileText },
     { name: "Continuity", href: "/continuity-agent", icon: Focus },
+    { name: "Admin", href: "/admin", icon: Settings2 },
   ];
 
   return (
