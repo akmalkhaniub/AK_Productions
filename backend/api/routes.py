@@ -33,7 +33,8 @@ class AutoDubRequest(BaseModel):
     target_language: str
 
 class ScriptBreakdownRequest(BaseModel):
-    filename: str
+    filename: str = ""
+    script_id: int = 0
 
 class ContinuityRequest(BaseModel):
     filename: str
@@ -61,8 +62,8 @@ async def auto_dub_endpoint(request: AutoDubRequest):
     return {"status": "success", "data": result}
 
 @router.post("/script-breakdown")
-async def script_breakdown_endpoint(request: ScriptBreakdownRequest):
-    result = parse_and_breakdown(filename=request.filename)
+async def script_breakdown_endpoint(request: ScriptBreakdownRequest, db: Session = Depends(get_db)):
+    result = parse_and_breakdown(filename=request.filename, db=db, script_id=request.script_id)
     return {"status": "success", "data": result}
 
 @router.post("/check-continuity")
