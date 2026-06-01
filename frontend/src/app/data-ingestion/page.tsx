@@ -319,7 +319,7 @@ export default function DataIngestion() {
           <div className="bg-muted p-4 border-t border-border flex justify-end">
             <Link 
               href="/library"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-foreground text-background px-4 text-sm font-medium hover:bg-foreground/90 transition-colors"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-accent text-accent-foreground px-4 text-sm font-medium hover:bg-accent/90 transition-colors"
             >
               Saved to Database
               <ArrowRight className="w-4 h-4 ml-2" />

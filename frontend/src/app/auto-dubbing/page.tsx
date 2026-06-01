@@ -81,7 +81,7 @@ export default function AutoDubbing() {
             <button 
               type="submit" 
               disabled={loading || !file}
-              className="w-full h-12 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
+              className="w-full h-12 rounded-md bg-accent text-accent-foreground font-medium hover:bg-accent/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
             >
               {loading ? (
                 <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing Pipeline...</>

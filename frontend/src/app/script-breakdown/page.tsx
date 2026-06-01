@@ -127,7 +127,7 @@ export default function ScriptBreakdown() {
               <button
                 onClick={handleRun}
                 disabled={selectedScriptId === 0}
-                className="h-12 px-6 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
+                className="h-12 px-6 rounded-md bg-accent text-accent-foreground font-medium hover:bg-accent/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
               >
                 <Wrench className="w-4 h-4 mr-2" /> Run Breakdown Agent
                 <ArrowRight className="w-4 h-4 ml-2" />

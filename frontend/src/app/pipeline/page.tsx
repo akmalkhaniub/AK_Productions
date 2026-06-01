@@ -91,7 +91,7 @@ export default function PipelineWizard() {
           <button 
             onClick={handleNext}
             disabled={currentStep === steps.length || isProcessing}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-accent/90 disabled:opacity-50"
           >
             {isProcessing ? "Processing..." : "Run Agent & Continue"}
             {!isProcessing && <ChevronRight className="ml-2 h-4 w-4" />}

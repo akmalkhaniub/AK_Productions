@@ -148,7 +148,7 @@ export default function ActingCoach() {
               <button 
                 onClick={handleAnalyze}
                 disabled={!selectedScriptId && !file}
-                className="w-full h-12 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
+                className="w-full h-12 rounded-md bg-accent text-accent-foreground font-medium hover:bg-accent/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
               >
                 Analyze Performance
                 <ArrowRight className="w-4 h-4 ml-2" />

@@ -98,7 +98,7 @@ function IndustryIntelInner() {
               {accounts.map(a => (
                 <div key={a.id} className="flex items-center justify-between border border-border rounded-lg p-3 text-sm">
                   <span className="text-foreground truncate">{a.email}</span>
-                  <button onClick={() => run(a.id)} disabled={running} className="text-xs bg-foreground text-background px-3 py-1.5 rounded-md hover:bg-foreground/90 disabled:opacity-40 flex items-center">
+                  <button onClick={() => run(a.id)} disabled={running} className="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:bg-accent/90 disabled:opacity-40 flex items-center">
                     <Play className="w-3 h-3 mr-1" /> Run brief
                   </button>
                 </div>
@@ -126,7 +126,7 @@ function IndustryIntelInner() {
           </div>
           <div className="flex items-center gap-3 mt-3">
             <button onClick={() => setChannels(cs => [...cs, { channel_id: '', title: '' }])} className="text-xs text-muted-foreground hover:text-foreground flex items-center"><Plus className="w-3 h-3 mr-1" /> Add channel</button>
-            <button onClick={() => run(0)} disabled={running || !channels.some(c => c.channel_id.trim())} className="ml-auto h-9 px-4 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center">
+            <button onClick={() => run(0)} disabled={running || !channels.some(c => c.channel_id.trim())} className="ml-auto h-9 px-4 rounded-md bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 disabled:opacity-40 flex items-center">
               {running ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Running…</> : <><Play className="w-4 h-4 mr-2" /> Run brief</>}
             </button>
           </div>

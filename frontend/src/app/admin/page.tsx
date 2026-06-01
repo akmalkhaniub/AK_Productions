@@ -155,7 +155,7 @@ export default function AdminPanel() {
               <button
                 onClick={handleSave}
                 disabled={saving || !dirty}
-                className="h-11 px-6 rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
+                className="h-11 px-6 rounded-md bg-accent text-accent-foreground font-medium hover:bg-accent/90 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
               >
                 {saving ? (
                   <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>

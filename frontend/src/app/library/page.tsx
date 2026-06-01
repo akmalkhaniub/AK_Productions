@@ -82,7 +82,7 @@ export default function Library() {
           <p className="text-muted-foreground mb-6">You haven't ingested any YouTube scripts yet, or your search didn't match anything.</p>
           <Link 
             href="/data-ingestion"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-foreground text-background px-6 text-sm font-medium hover:bg-foreground/90 transition-colors"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-accent text-accent-foreground px-6 text-sm font-medium hover:bg-accent/90 transition-colors"
           >
             Start Ingesting
           </Link>
