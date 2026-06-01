@@ -78,7 +78,7 @@ export default function ScriptViewer() {
         </div>
         <div className="hidden md:flex gap-2">
           {script.characters_identified.map((char: string, i: number) => (
-             <span key={i} className="px-2 py-1 text-xs font-medium rounded-md bg-muted border border-border text-muted-foreground">
+             <span key={i} className="px-2 py-1 text-xs font-medium rounded-md bg-accent/10 border border-accent/20 text-accent">
                {char}
              </span>
           ))}
@@ -90,7 +90,8 @@ export default function ScriptViewer() {
         
         {/* Left Pane: Video Player */}
         <div className="w-full lg:w-1/2 border-r border-border bg-black flex flex-col relative shrink-0 h-[40vh] lg:h-auto">
-          <iframe 
+          <div className="absolute top-0 inset-x-0 h-0.5 gradient-bg z-10" />
+          <iframe
             src={`https://www.youtube.com/embed/${script.video_id}?autoplay=0&rel=0`}
             title="YouTube video player" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -105,9 +106,9 @@ export default function ScriptViewer() {
             
             {/* Scene Header */}
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold uppercase tracking-widest text-foreground mb-4">{script.title}</h2>
-              <div className="inline-block px-4 py-1 border border-foreground/20 rounded-full mb-6">
-                <p className="text-sm font-medium text-muted-foreground">SCENE DESCRIPTION</p>
+              <h2 className="text-3xl font-bold uppercase tracking-widest gradient-text mb-4">{script.title}</h2>
+              <div className="inline-block px-4 py-1 border border-accent/30 bg-accent/10 rounded-full mb-6">
+                <p className="text-xs font-medium uppercase tracking-widest text-accent">Scene Description</p>
               </div>
               <p className="text-lg text-foreground/90 italic leading-relaxed">
                 {script.scene_description}
@@ -123,10 +124,10 @@ export default function ScriptViewer() {
                 </h3>
                 <div className="space-y-6">
                   {data.actor_sequences.map((seq: any, idx: number) => (
-                    <div key={idx} className="relative pl-4 border-l-2 border-foreground/30">
+                    <div key={idx} className="relative pl-4 border-l-2 border-accent/50">
                       <div className="font-semibold text-foreground flex justify-between">
                         <span>{seq.character}</span>
-                        <span className="text-xs font-mono text-muted-foreground bg-background border border-border px-2 py-0.5 rounded cursor-pointer hover:bg-muted transition-colors">
+                        <span className="text-xs font-mono text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded">
                           {seq.appearance_timestamps}
                         </span>
                       </div>
@@ -150,9 +151,9 @@ export default function ScriptViewer() {
 
               {data.script.map((line: any, idx: number) => (
                 <div key={idx} className="relative">
-                  <div className="font-bold text-foreground text-center mb-3 uppercase tracking-widest text-lg">{line.speaker}</div>
-                  <div className="max-w-sm mx-auto text-center space-y-2">
-                    <p className="text-2xl text-foreground mb-2 font-arabic leading-relaxed" dir="rtl">{line.dialogue.urdu_script}</p>
+                  <div className="font-bold text-accent text-center mb-3 uppercase tracking-widest text-lg">{line.speaker}</div>
+                  <div className="max-w-md mx-auto text-center space-y-3">
+                    <p className="font-urdu text-3xl text-foreground leading-relaxed" dir="rtl" lang="ur">{line.dialogue.urdu_script}</p>
                     <p className="text-foreground/90 font-medium text-lg">{line.dialogue.roman_urdu}</p>
                     <p className="text-muted-foreground text-sm italic">({line.dialogue.english})</p>
                   </div>
@@ -161,8 +162,8 @@ export default function ScriptViewer() {
             </div>
 
             <div className="mt-20 pt-8 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">END OF SCENE</p>
-              <div className="w-12 h-1 bg-foreground mx-auto rounded-full opacity-20"></div>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">End of Scene</p>
+              <div className="w-12 h-1 bg-accent mx-auto rounded-full"></div>
             </div>
 
           </div>
