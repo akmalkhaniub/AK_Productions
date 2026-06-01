@@ -7,11 +7,12 @@ from ai_agents.post_production.auto_dubber import generate_dub
 from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
-from core.models import Project, DramaScript
+from core.models import Project, DramaScript, ConnectedAccount, IntelBrief
 from core import config, settings_service
 from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
 from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
+from ai_agents.industry_intel import youtube_source, intel_agent, delivery
 
 router = APIRouter()
 
@@ -184,12 +185,14 @@ MODEL_OPTIONS = {
     "gemini_model": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"],
     "openai_model": ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
     "ingestion_model": ["openai", "gemini"],
+    "intel_provider": ["openai", "gemini"],
 }
 
 class SettingsUpdate(BaseModel):
     gemini_model: str | None = None
     openai_model: str | None = None
     ingestion_model: str | None = None
+    intel_provider: str | None = None
 
 @router.get("/admin/settings")
 def get_admin_settings():
@@ -214,3 +217,109 @@ def update_admin_settings(payload: SettingsUpdate, db: Session = Depends(get_db)
             return {"status": "error", "message": f"Invalid value '{value}' for {key}"}
     settings = settings_service.update_settings(db, updates)
     return {"status": "success", "data": {"settings": settings}}
+
+# --- Studio Intelligence agent ---
+
+import datetime
+import secrets
+from fastapi.responses import RedirectResponse
+
+class ChannelInput(BaseModel):
+    channel_id: str
+    title: str = ""
+
+class IntelRunRequest(BaseModel):
+    account_id: int = 0           # use a connected account's subscriptions
+    channels: list[ChannelInput] = []  # or a manual channel list (demo, no login)
+    deliver: bool = False
+
+def _valid_access_token(db: Session, account: ConnectedAccount) -> str:
+    """Return a usable access token, refreshing it if expired."""
+    if account.token_expiry and account.token_expiry <= datetime.datetime.utcnow():
+        refreshed = youtube_source.refresh_access_token(account.refresh_token)
+        account.access_token = refreshed["access_token"]
+        account.token_expiry = refreshed["token_expiry"]
+        db.commit()
+    return account.access_token
+
+def run_and_store_brief(db: Session, channels: list[dict], account_id: int = 0, deliver: bool = False) -> dict:
+    """Core pipeline shared by the API endpoint and the scheduler."""
+    account = None
+    if account_id:
+        account = db.query(ConnectedAccount).filter(ConnectedAccount.id == account_id).first()
+        if not account:
+            return {"status": "error", "message": "Connected account not found."}
+        token = _valid_access_token(db, account)
+        channels = youtube_source.get_subscriptions(token)
+
+    brief = intel_agent.run_intel_agent(channels)
+    if brief.get("status") != "success":
+        return brief
+
+    record = IntelBrief(
+        account_id=account_id or None,
+        headline=brief["headline"],
+        content=json.dumps(brief),
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    brief["id"] = record.id
+
+    if deliver:
+        brief["delivery"] = delivery.deliver(
+            brief,
+            email=(account.notify_email if account else ""),
+            slack_webhook=(account.slack_webhook if account else ""),
+        )
+    return brief
+
+@router.get("/intel/oauth/start")
+def intel_oauth_start():
+    if not config.GOOGLE_OAUTH_CLIENT_ID:
+        return {"status": "error", "message": "Google OAuth is not configured. Set GOOGLE_OAUTH_CLIENT_ID/SECRET."}
+    state = secrets.token_urlsafe(16)
+    return {"status": "success", "data": {"auth_url": youtube_source.build_auth_url(state)}}
+
+@router.get("/intel/oauth/callback")
+def intel_oauth_callback(code: str = "", state: str = "", db: Session = Depends(get_db)):
+    try:
+        info = youtube_source.exchange_code(code)
+    except Exception as e:
+        return RedirectResponse(f"{config.FRONTEND_URL}/industry-intel?error={str(e)[:120]}")
+
+    account = db.query(ConnectedAccount).filter(ConnectedAccount.google_sub == info["google_sub"]).first()
+    if account:
+        account.access_token = info["access_token"]
+        account.token_expiry = info["token_expiry"]
+        if info.get("refresh_token"):
+            account.refresh_token = info["refresh_token"]
+        account.email = info.get("email")
+    else:
+        account = ConnectedAccount(
+            google_sub=info["google_sub"], email=info.get("email"),
+            access_token=info["access_token"], refresh_token=info.get("refresh_token"),
+            token_expiry=info["token_expiry"], notify_email=info.get("email"),
+        )
+        db.add(account)
+    db.commit()
+    return RedirectResponse(f"{config.FRONTEND_URL}/industry-intel?connected=1")
+
+@router.get("/intel/accounts")
+def intel_accounts(db: Session = Depends(get_db)):
+    accounts = db.query(ConnectedAccount).order_by(ConnectedAccount.created_at.desc()).all()
+    return {"status": "success", "data": [
+        {"id": a.id, "email": a.email, "connected_at": a.created_at.isoformat()} for a in accounts
+    ]}
+
+@router.post("/intel/run")
+def intel_run(request: IntelRunRequest, db: Session = Depends(get_db)):
+    channels = [c.model_dump() for c in request.channels]
+    return run_and_store_brief(db, channels, account_id=request.account_id, deliver=request.deliver)
+
+@router.get("/intel/brief/latest")
+def intel_latest(db: Session = Depends(get_db)):
+    record = db.query(IntelBrief).order_by(IntelBrief.created_at.desc()).first()
+    if not record:
+        return {"status": "success", "data": None}
+    return {"status": "success", "data": json.loads(record.content)}

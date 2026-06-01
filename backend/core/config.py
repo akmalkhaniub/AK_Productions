@@ -52,10 +52,35 @@ CORS_ORIGINS = [
     if o.strip()
 ]
 
+# --- Studio Intelligence agent (YouTube subscription digest) ---
+# Google OAuth client (for "Connect YouTube"). Create at console.cloud.google.com
+# → APIs & Services → Credentials → OAuth client ID (Web application).
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+# Must exactly match an authorized redirect URI on the OAuth client.
+OAUTH_REDIRECT_URI = os.getenv("OAUTH_REDIRECT_URI", "http://localhost:8000/api/intel/oauth/callback")
+# Where to bounce the user back to in the frontend after connecting.
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+# Delivery channels
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
+
+# Run the daily brief in-process via APScheduler (demo). In production prefer
+# an external trigger (GCP Cloud Scheduler → POST /api/intel/run).
+INTEL_DAILY_ENABLED = _get_bool("INTEL_DAILY_ENABLED", False)
+INTEL_DAILY_HOUR = int(os.getenv("INTEL_DAILY_HOUR", "8"))  # local server hour
+
 # Defaults seeded into the settings table on first run / served as fallback.
 DEFAULT_SETTINGS = {
     "gemini_model": GEMINI_MODEL,
     "openai_model": OPENAI_MODEL,
     # Default provider for the YouTube transcript ingestion agent.
     "ingestion_model": "openai",
+    # Provider the Studio Intelligence agent summarizes with.
+    "intel_provider": "openai",
 }

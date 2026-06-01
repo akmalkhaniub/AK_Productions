@@ -59,3 +59,36 @@ class DramaScript(Base):
     characters_identified = Column(String) # Stored as comma separated string
     script_content = Column(Text) # Stored as JSON string of the structured script
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class ConnectedAccount(Base):
+    """A user's connected Google/YouTube account for the Studio Intelligence
+    agent. Stores OAuth tokens so we can read their subscriptions.
+
+    NOTE: tokens are stored as-is for the MVP. Before any public launch,
+    encrypt them at rest and complete Google's OAuth verification for the
+    restricted youtube.readonly scope."""
+    __tablename__ = "connected_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String, default="google")
+    google_sub = Column(String, index=True, unique=True)  # stable Google user id
+    email = Column(String)
+    access_token = Column(Text)
+    refresh_token = Column(Text)
+    token_expiry = Column(DateTime, nullable=True)
+    # Delivery preferences
+    notify_email = Column(String, nullable=True)
+    slack_webhook = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class IntelBrief(Base):
+    """A generated daily Studio Intelligence brief."""
+    __tablename__ = "intel_briefs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("connected_accounts.id"), nullable=True)
+    headline = Column(String)
+    content = Column(Text)  # JSON string: { headline, sections[], agent_trace[] }
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

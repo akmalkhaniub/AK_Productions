@@ -18,7 +18,7 @@
 
 ## What is AK Productions?
 
-AK Productions is a **multi-agent AI platform** for film & television production. Instead of one monolithic chatbot, it deploys a network of **6 specialized AI agents** — each purpose-built for a specific production workflow — that share a persistent PostgreSQL knowledge base.
+AK Productions is a **multi-agent AI platform** for film & television production. Instead of one monolithic chatbot, it deploys a network of **7 specialized AI agents** — each purpose-built for a specific production workflow — that share a persistent PostgreSQL knowledge base.
 
 The platform's flagship capability is its **Multimodal Data Ingestion Engine**: paste a YouTube URL, and the system will download the video, feed it to **Google Gemini 2.5 Pro** (via Vertex AI), and automatically generate a structured, trilingual screenplay — complete with actor timestamps, scene topography, and camera angle descriptions.
 
@@ -36,7 +36,8 @@ The platform's flagship capability is its **Multimodal Data Ingestion Engine**: 
 | 📚 **Persistent Script Library** | All extracted screenplays are saved to PostgreSQL. Browse, search, and revisit any script from the Library dashboard. |
 | 🖥 **Studio Script Viewer** | Split-screen view: embedded YouTube player on the left, synced screenplay on the right. Read the script as you watch the scene. |
 | ⏱ **Configurable Duration** | Don't download a 2-hour movie to test one scene. Set a duration limit (e.g., first 5 minutes) from the UI. |
-| 🤖 **6 Specialized Agents** | IP Discovery, Script Breakdown, Acting Coach, Continuity, Auto-Dubbing, and Data Ingestion — each with its own logic, prompts, and data pipeline. |
+| 📡 **Studio Intelligence** | Connect YouTube (or track channels manually) and an agent compiles a daily brief of new uploads across the channels your studio follows — using free RSS feeds (no API quota) + transcripts — delivered to email/Slack. |
+| 🤖 **7 Specialized Agents** | Data Ingestion, IP Discovery, Script Breakdown, Acting Coach, Continuity, Auto-Dubbing, and Studio Intelligence — each with its own logic, prompts, and data pipeline. |
 | 📱 **Cross-Platform** | Web (Next.js), iOS & Android (Expo React Native), all hitting the same FastAPI backend. |
 
 ---

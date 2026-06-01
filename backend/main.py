@@ -21,6 +21,12 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
+@app.on_event("startup")
+def _startup():
+    # Optional in-process daily Studio Intelligence brief (off by default).
+    from core.scheduler import start_scheduler
+    start_scheduler()
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to AK_Productions API"}
