@@ -14,7 +14,7 @@ admin panel):
 import datetime
 import json
 
-from core import config, settings_service
+from core import config, settings_service, llm
 from . import youtube_source
 
 MAX_STEPS = 14
@@ -112,65 +112,40 @@ def run_intel_agent(channels: list[dict]) -> dict:
     return _run_openai(channels)
 
 
-# --- OpenAI agentic loop --------------------------------------------------
+# --- Agentic loop (resilient, cheap-first multi-provider) -----------------
 
 def _run_openai(channels: list[dict]) -> dict:
-    api_key = config.OPENAI_API_KEY
-    if not (api_key and api_key != "your_openai_api_key_here"):
-        return {"status": "error", "message": "No OpenAI API key. Set one, or switch intel_provider to 'gemini' in the admin panel."}
-
-    from openai import OpenAI
-
-    client = OpenAI(api_key=api_key)
-    model = settings_service.get("openai_model") or config.OPENAI_MODEL
-
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": "Produce today's studio intelligence brief from the tracked channels."},
     ]
     trace: list[str] = []
 
-    try:
-        for _ in range(MAX_STEPS):
-            response = client.chat.completions.create(
-                model=model, messages=messages, tools=TOOLS, tool_choice="auto")
-            msg = response.choices[0].message
-            messages.append(msg)
+    def dispatch(name, args):
+        if name == "list_tracked_channels":
+            trace.append(f"Listed {len(channels)} tracked channels")
+            return ("result", json.dumps(channels))
+        if name == "get_recent_uploads":
+            cid = args.get("channel_id", "")
+            vids = youtube_source.get_recent_uploads(cid)
+            trace.append(f"Checked recent uploads for {cid} ({len(vids)} found)")
+            return ("result", json.dumps(vids))
+        if name == "get_transcript":
+            vid = args.get("video_id", "")
+            trace.append(f"Read transcript for video {vid}")
+            return ("result", json.dumps({"video_id": vid, "transcript": get_transcript(vid)}))
+        if name == "submit_brief":
+            trace.append("Composed daily brief")
+            return ("done", _finalize(args, trace))
+        return ("result", json.dumps({"error": f"Unknown tool {name}"}))
 
-            if not msg.tool_calls:
-                messages.append({"role": "user", "content": "Call submit_brief with the final brief."})
-                continue
-
-            for call in msg.tool_calls:
-                name = call.function.name
-                try:
-                    args = json.loads(call.function.arguments or "{}")
-                except ValueError:
-                    args = {}
-
-                if name == "list_tracked_channels":
-                    trace.append(f"Listed {len(channels)} tracked channels")
-                    result = json.dumps(channels)
-                elif name == "get_recent_uploads":
-                    cid = args.get("channel_id", "")
-                    vids = youtube_source.get_recent_uploads(cid)
-                    trace.append(f"Checked recent uploads for {cid} ({len(vids)} found)")
-                    result = json.dumps(vids)
-                elif name == "get_transcript":
-                    vid = args.get("video_id", "")
-                    trace.append(f"Read transcript for video {vid}")
-                    result = json.dumps({"video_id": vid, "transcript": get_transcript(vid)})
-                elif name == "submit_brief":
-                    trace.append("Composed daily brief")
-                    return _finalize(args, trace)
-                else:
-                    result = json.dumps({"error": f"Unknown tool {name}"})
-
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
-
-        return {"status": "error", "message": "Agent did not finish within the step limit."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    result = llm.run_tool_loop(messages, TOOLS, dispatch, max_steps=MAX_STEPS,
+                               on_attempt=lambda _p: trace.clear())
+    if result["ok"]:
+        brief = result["data"]
+        brief["agent_trace"] = brief.get("agent_trace", []) + [f"Completed via {result['provider']}"]
+        return brief
+    return {"status": "error", "message": "All providers failed: " + "; ".join(result.get("errors", []))}
 
 
 # --- Gemini deterministic path -------------------------------------------

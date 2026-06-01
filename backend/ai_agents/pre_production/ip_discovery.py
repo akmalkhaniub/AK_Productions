@@ -2,42 +2,29 @@ import random
 import time
 import json
 
-from core import config
-from core import settings_service
-
-OPENAI_API_KEY = config.OPENAI_API_KEY
+from core import llm
 
 def discover_ip_remake(genre: str, era: str) -> dict:
     """
-    MVP Agent Logic for discovering an IP for remake.
-    Uses OpenAI if API key is present, otherwise falls back to mock data.
+    Discovers a forgotten IP to remake. Uses the resilient cheap-first LLM
+    chain (any available provider); falls back to mock data if all fail.
     """
-    if OPENAI_API_KEY and OPENAI_API_KEY != "your_openai_api_key_here":
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=OPENAI_API_KEY)
-            model = settings_service.get("openai_model") or config.OPENAI_MODEL
-
-            prompt = f"You are a Hollywood executive AI. The user wants to discover a forgotten {genre} IP from the {era} to remake for modern audiences. Provide a JSON response with the following keys: 'original_title', 'year', 'logline', 'modern_twist', 'why_now', and a 'match_score' (1-100)."
-
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"}
-            )
-            
-            result = json.loads(response.choices[0].message.content)
-            return {
-                "original_title": result.get("original_title", "Unknown"),
-                "year": result.get("year", era),
-                "genre": genre,
-                "logline": result.get("logline", "No logline generated."),
-                "modern_twist": result.get("modern_twist", "No twist generated."),
-                "why_now": result.get("why_now", "Highly relevant today."),
-                "match_score": result.get("match_score", 95)
-            }
-        except Exception as e:
-            print(f"OpenAI API failed: {e}. Falling back to mock data.")
+    try:
+        prompt = f"You are a Hollywood executive AI. The user wants to discover a forgotten {genre} IP from the {era} to remake for modern audiences. Provide a JSON response with the following keys: 'original_title', 'year', 'logline', 'modern_twist', 'why_now', and a 'match_score' (1-100)."
+        content, provider = llm.chat_json([{"role": "user", "content": prompt}])
+        result = json.loads(content)
+        return {
+            "original_title": result.get("original_title", "Unknown"),
+            "year": result.get("year", era),
+            "genre": genre,
+            "logline": result.get("logline", "No logline generated."),
+            "modern_twist": result.get("modern_twist", "No twist generated."),
+            "why_now": result.get("why_now", "Highly relevant today."),
+            "match_score": result.get("match_score", 95),
+            "provider": provider,
+        }
+    except Exception as e:
+        print(f"All LLM providers failed: {e}. Falling back to mock data.")
 
     # Simulate agentic "thinking" time
     time.sleep(2)

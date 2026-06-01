@@ -1,14 +1,9 @@
-import os
 import json
 from youtube_transcript_api import YouTubeTranscriptApi
-from openai import AsyncOpenAI
 from google.genai import types
 
-from core import config
+from core import config, settings_service, llm
 from core.genai_client import get_genai_client
-from core import settings_service
-
-client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 
 async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
     """
@@ -84,18 +79,13 @@ async def ingest_youtube_drama(video_url: str, model_override: str = "openai"):
             )
             structured_data = json.loads(response.text)
         else:
-            openai_model = settings_service.get("openai_model") or config.OPENAI_MODEL
-            print(f"Routing text parsing to {openai_model}...")
-            # Call OpenAI
-            response = await client.chat.completions.create(
-                model=openai_model,
-                response_format={ "type": "json_object" },
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Here is the raw transcript to format:\n\n{raw_text}"}
-                ]
-            )
-            structured_data = json.loads(response.choices[0].message.content)
+            # Resilient cheap-first chain (Groq → Gemini → OpenAI → OpenRouter).
+            content, provider = llm.chat_json([
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Here is the raw transcript to format:\n\n{raw_text}"},
+            ])
+            print(f"Structured transcript via {provider}")
+            structured_data = json.loads(content)
 
         
         return {

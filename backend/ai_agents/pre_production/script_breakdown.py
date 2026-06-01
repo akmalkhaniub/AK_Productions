@@ -13,7 +13,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from core import config, settings_service
+from core import llm
 from core.models import DramaScript
 
 MAX_STEPS = 8
@@ -126,89 +126,57 @@ def _tool_get_script(db: Session, script_id: int) -> str:
 
 def parse_and_breakdown(filename: str = "", db: Session = None, script_id: int = 0):
     """Run the Script Breakdown agent. Prefers a real Library script (script_id);
-    falls back to a title-only request, then to mock data if no API key."""
-    api_key = config.OPENAI_API_KEY
-    if not (api_key and api_key != "your_openai_api_key_here") or db is None:
+    falls back to a title-only request, then to mock data if all providers fail."""
+    if db is None:
         return _mock_breakdown(filename)
 
-    try:
-        from openai import OpenAI
+    if script_id > 0:
+        user_msg = f"Produce a production breakdown for the Library script with id {script_id}. Read it first, then submit."
+    elif filename:
+        user_msg = f"Produce a production breakdown. The user uploaded '{filename}'. Browse the Library, pick the most relevant script, read it, then submit."
+    else:
+        user_msg = "Browse the Library, choose the most interesting script, read it, then submit a production breakdown."
 
-        client = OpenAI(api_key=api_key)
-        model = settings_service.get("openai_model") or config.OPENAI_MODEL
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_msg},
+    ]
 
-        if script_id > 0:
-            user_msg = f"Produce a production breakdown for the Library script with id {script_id}. Read it first, then submit."
-        elif filename:
-            user_msg = f"Produce a production breakdown. The user uploaded '{filename}'. Browse the Library, pick the most relevant script, read it, then submit."
-        else:
-            user_msg = "Browse the Library, choose the most interesting script, read it, then submit a production breakdown."
+    trace: list[str] = []
 
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_msg},
-        ]
+    def dispatch(name, args):
+        if name == "list_library_scripts":
+            trace.append("Listed available scripts in the Library")
+            return ("result", _tool_list_scripts(db))
+        if name == "get_script":
+            sid = int(args.get("script_id", 0))
+            trace.append(f"Read full script content for script #{sid}")
+            return ("result", _tool_get_script(db, sid))
+        if name == "submit_breakdown":
+            trace.append("Submitted final production breakdown")
+            elements = args.get("elements", [])
+            for i, el in enumerate(elements, start=1):
+                el["id"] = i
+            return ("done", {
+                "status": "Completed",
+                "script_title": args.get("script_title", "Untitled Script"),
+                "total_scenes": args.get("total_scenes", 0),
+                "speaking_roles": args.get("speaking_roles", 0),
+                "estimated_budget_range": args.get("estimated_budget_range", "N/A"),
+                "elements": elements,
+                "agent_trace": trace,
+            })
+        return ("result", json.dumps({"error": f"Unknown tool {name}"}))
 
-        trace = []  # human-readable record of the agent's actions, for the UI
+    result = llm.run_tool_loop(messages, TOOLS, dispatch, max_steps=MAX_STEPS,
+                               on_attempt=lambda _p: trace.clear())
+    if result["ok"]:
+        data = result["data"]
+        data["agent_trace"] = data.get("agent_trace", []) + [f"Completed via {result['provider']}"]
+        return data
 
-        for _ in range(MAX_STEPS):
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                tools=TOOLS,
-                tool_choice="auto",
-            )
-            msg = response.choices[0].message
-            messages.append(msg)
-
-            if not msg.tool_calls:
-                # Agent produced prose instead of a tool call — nudge it once.
-                messages.append({"role": "user", "content": "Please call submit_breakdown with your final structured breakdown."})
-                continue
-
-            for call in msg.tool_calls:
-                name = call.function.name
-                try:
-                    args = json.loads(call.function.arguments or "{}")
-                except ValueError:
-                    args = {}
-
-                if name == "list_library_scripts":
-                    trace.append("Listed available scripts in the Library")
-                    result = _tool_list_scripts(db)
-                elif name == "get_script":
-                    sid = int(args.get("script_id", 0))
-                    trace.append(f"Read full script content for script #{sid}")
-                    result = _tool_get_script(db, sid)
-                elif name == "submit_breakdown":
-                    trace.append("Submitted final production breakdown")
-                    elements = args.get("elements", [])
-                    for i, el in enumerate(elements, start=1):
-                        el["id"] = i
-                    return {
-                        "status": "Completed",
-                        "script_title": args.get("script_title", "Untitled Script"),
-                        "total_scenes": args.get("total_scenes", 0),
-                        "speaking_roles": args.get("speaking_roles", 0),
-                        "estimated_budget_range": args.get("estimated_budget_range", "N/A"),
-                        "elements": elements,
-                        "agent_trace": trace,
-                    }
-                else:
-                    result = json.dumps({"error": f"Unknown tool {name}"})
-
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": call.id,
-                    "content": result,
-                })
-
-        # Ran out of steps without a submission.
-        return {"status": "error", "message": "Agent did not complete a breakdown within the step limit."}
-
-    except Exception as e:
-        print(f"Script Breakdown agent failed: {e}. Falling back to mock data.")
-        return _mock_breakdown(filename)
+    print(f"Script Breakdown agent failed across providers: {result.get('errors')}")
+    return _mock_breakdown(filename)
 
 
 def _mock_breakdown(filename: str):

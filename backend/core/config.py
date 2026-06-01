@@ -33,6 +33,10 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 # --- AI backend / credentials (env-only, never in the settings DB) ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Additional OpenAI-compatible providers used for the resilient fallback chain
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 # Use Vertex AI backend instead of the Gemini Developer API.
 # NOTE: the Files API (video upload) is only supported on the Developer API,

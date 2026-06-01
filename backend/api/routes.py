@@ -13,6 +13,7 @@ from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
 from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
 from ai_agents.industry_intel import youtube_source, intel_agent, delivery
+from core import llm
 
 router = APIRouter()
 
@@ -205,6 +206,7 @@ def get_admin_settings():
             "gemini_backend": "vertex" if config.GEMINI_USE_VERTEX else "developer",
             "gemini_key_present": bool(config.GEMINI_API_KEY),
             "openai_key_present": bool(config.OPENAI_API_KEY),
+            "llm_chain": llm.available_providers(),
         },
     }
 

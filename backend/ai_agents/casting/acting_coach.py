@@ -1,10 +1,6 @@
-import os
 import json
-from google.genai import types
 
-from core import config
-from core.genai_client import get_genai_client
-from core import settings_service
+from core import llm
 
 def analyze_audio_performance(filename: str, script_data: dict = None):
     """
@@ -72,20 +68,11 @@ def analyze_audio_performance(filename: str, script_data: dict = None):
         """
     
     try:
-        model = settings_service.get("gemini_model") or config.GEMINI_MODEL
-        client = get_genai_client()
-
-        response = client.models.generate_content(
-            model=model,
-            contents=[prompt],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        
-        analysis = json.loads(response.text)
+        content, provider = llm.chat_json([{"role": "user", "content": prompt}])
+        analysis = json.loads(content)
+        analysis["provider"] = provider
         return analysis
-        
+
     except Exception as e:
         # Fallback with error info
         import random
@@ -96,6 +83,6 @@ def analyze_audio_performance(filename: str, script_data: dict = None):
             "dynamic_range": "N/A",
             "waveform": [random.uniform(0.1, 1.0) for _ in range(40)],
             "pitch_contour": [random.uniform(100, 350) for _ in range(40)],
-            "director_notes": f"The Gemini analysis could not be completed. Error: {str(e)}",
+            "director_notes": f"Analysis could not be completed across any provider. Error: {str(e)}",
             "improvement_areas": []
         }
