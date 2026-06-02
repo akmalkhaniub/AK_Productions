@@ -63,10 +63,25 @@ script.
 **Why:** Lets the Studio Viewer and Script Breakdown / Showrunner be demoed
 without spending an ingestion/LLM call.
 
+### ADR-011 · Promote Continuity to a real agent
+**Decision:** Replace the Continuity mock with a tool-loop agent that reads a
+real Library script and flags grounded continuity risks (Pydantic-validated).
+**Why:** Two of the roster were `time.sleep` mocks; this makes Continuity a real
+agent and grounds the Showrunner's continuity delegation. Frame-level CV
+(YOLO/SAM over sampled frames) remains roadmap — the agent is shaped so a vision
+tool can be added later.
+
+### ADR-012 · Stream agent steps via SSE
+**Decision:** Add `GET /api/showrunner/stream` (Server-Sent Events); the agent
+runs in a worker thread with its own DB session and pushes steps to a queue.
+**Why:** A 50s orchestration behind a blank spinner feels broken; streaming the
+trace live makes the multi-agent reasoning visible (and is a strong demo).
+Worker-thread + fresh session because SQLAlchemy sessions aren't thread-safe.
+
 ---
 
 ## Open items / roadmap
-- Continuity & Auto-Dubbing are mocks — promote to real agents (CV / Whisper+XTTS+Wav2Lip).
-- Add memory/RAG, step streaming, and human-in-the-loop approval gates.
+- Auto-Dubbing is still a mock; Continuity is script-grounded (frame-level CV next).
+- Add memory/RAG; extend step streaming to all agents; human-in-the-loop gates.
 - Encrypt stored OAuth tokens; complete Google OAuth verification for public use.
 - Consider adding Anthropic (direct or via OpenRouter) to the LLM chain.

@@ -16,23 +16,27 @@ export default function Showrunner() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [liveSteps, setLiveSteps] = useState<string[]>([]);
 
-  const run = async () => {
+  const run = () => {
     if (!goal.trim()) return;
-    setRunning(true); setResult(null); setError("");
-    try {
-      const res = await fetch(apiUrl('/api/showrunner/run'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal }),
-      });
-      const data = await res.json();
-      if (data.status === 'Completed') setResult(data);
-      else setError(data.message || "The Showrunner could not complete the plan.");
-    } catch {
-      setError("Network error. Is the backend running?");
-    } finally {
-      setRunning(false);
-    }
+    setRunning(true); setResult(null); setError(""); setLiveSteps([]);
+    // Stream steps live via Server-Sent Events.
+    const es = new EventSource(apiUrl(`/api/showrunner/stream?goal=${encodeURIComponent(goal)}`));
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'step') {
+          setLiveSteps((prev) => [...prev, data.message]);
+        } else if (data.type === 'done') {
+          es.close();
+          setRunning(false);
+          if (data.result?.status === 'Completed') setResult(data.result);
+          else setError(data.result?.message || "The Showrunner could not complete the plan.");
+        }
+      } catch { /* ignore malformed frame */ }
+    };
+    es.onerror = () => { es.close(); setRunning(false); if (!result) setError("Stream interrupted. Is the backend running?"); };
   };
 
   return (
@@ -71,10 +75,21 @@ export default function Showrunner() {
       )}
 
       {running && (
-        <div className="border border-border rounded-xl p-12 mt-6 flex flex-col items-center justify-center bg-background">
-          <Loader2 className="w-8 h-8 animate-spin text-accent mb-4" />
-          <p className="text-foreground font-medium">Showrunner is planning & delegating…</p>
-          <p className="text-muted-foreground text-sm mt-1">Calling specialist agents and synthesizing a plan.</p>
+        <div className="border border-border rounded-xl p-6 mt-6 bg-card">
+          <div className="flex items-center mb-4">
+            <Loader2 className="w-5 h-5 animate-spin text-accent mr-2" />
+            <p className="text-foreground font-medium">Showrunner is planning & delegating…</p>
+          </div>
+          <ol className="space-y-2">
+            {liveSteps.map((s, i) => (
+              <motion.li key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                className="flex items-start text-sm text-foreground">
+                <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 text-green-600 dark:text-green-400 shrink-0" />
+                <span className="font-mono text-xs sm:text-sm">{s}</span>
+              </motion.li>
+            ))}
+            {liveSteps.length === 0 && <li className="text-muted-foreground text-sm">Thinking…</li>}
+          </ol>
         </div>
       )}
 

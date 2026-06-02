@@ -24,7 +24,7 @@ FastAPI backend ── PostgreSQL (projects, scripts, settings, accounts, briefs
 | **Data Ingestion** (`data_ingestion/`) | Pipeline + single LLM call | YouTube → transcript/video → structured screenplay |
 | **IP Discovery** (`pre_production/`) | Single LLM call | Remake-candidate generator |
 | **Acting Coach** (`casting/`) | Single LLM call | Performance analysis vs. a script |
-| **Continuity** (`production/`) | Mock | Placeholder for a CV pipeline (roadmap) |
+| **Continuity** (`production/`) | ReAct tool-loop | Reads a real script, flags grounded continuity risks (frame-level CV = roadmap) |
 | **Auto-Dubbing** (`post_production/`) | Mock | Placeholder for Whisper/XTTS/Wav2Lip (roadmap) |
 
 See [02-agentic-patterns](./02-agentic-patterns.md) for how the real agents are built and

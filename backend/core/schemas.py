@@ -38,6 +38,19 @@ class IntelBriefResult(BaseModel):
     sections: list[BriefSection] = Field(default_factory=list)
 
 
+class ContinuityMarker(BaseModel):
+    time: str = ""
+    severity: str = "Medium"   # High | Medium | Low
+    issue: str
+    description: str
+    confidence: int = Field(default=80, ge=0, le=100)
+
+
+class ContinuityReport(BaseModel):
+    overall_score: int = Field(ge=0, le=100)
+    markers: list[ContinuityMarker] = Field(default_factory=list)
+
+
 class ShowrunnerPlan(BaseModel):
     summary: str
     steps_taken: list[str] = Field(default_factory=list)

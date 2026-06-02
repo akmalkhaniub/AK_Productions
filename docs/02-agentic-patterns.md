@@ -45,15 +45,24 @@ delegation's output. Sub-agents may run their own tool-loops (nested agents).
 Every model call goes through the [LLM gateway](./03-llm-fallback-chain.md),
 which tries providers in order and falls through on failure.
 
+## 7. Step streaming (Server-Sent Events)
+
+The Showrunner streams its trace **live**: `GET /api/showrunner/stream` runs the
+agent in a worker thread (with its own DB session) and pushes each step onto a
+queue an SSE generator drains. The `/showrunner` page consumes it with
+`EventSource`, so users watch delegations appear in real time instead of a
+spinner. (`run_showrunner(..., step_cb=...)`.)
+
 ## Observability
 
 Every agent returns an `agent_trace` (human-readable step list) and the
 `provider` that served it. The UI renders the trace so the agent's reasoning is
-visible.
+visible; the Showrunner renders it live.
 
 ## Known gaps / roadmap
 
 - No long-term/semantic memory or RAG yet (transcripts are truncated, not retrieved).
-- No streaming of steps to the client (spinner, not live trace).
+- Step streaming exists for the Showrunner; not yet for every agent.
 - No human-in-the-loop approval gates.
-- Continuity & Auto-Dubbing are still mocks.
+- Continuity is script-grounded reasoning, not yet frame-level CV.
+- Auto-Dubbing is still a mock.

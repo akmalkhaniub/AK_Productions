@@ -53,8 +53,8 @@ TOOLS = [
         "parameters": {"type": "object", "properties": {"genre": {"type": "string"}, "era": {"type": "string"}}, "required": ["genre", "era"]}}},
     {"type": "function", "function": {
         "name": "check_continuity",
-        "description": "Delegate to the Continuity agent to scan footage for discrepancies.",
-        "parameters": {"type": "object", "properties": {"filename": {"type": "string"}}, "required": ["filename"]}}},
+        "description": "Delegate to the Continuity agent to analyze a Library script for continuity risks.",
+        "parameters": {"type": "object", "properties": {"script_id": {"type": "integer"}}, "required": ["script_id"]}}},
     {"type": "function", "function": {
         "name": "submit_plan",
         "description": "Submit the final production plan. Call exactly once when done.",
@@ -66,7 +66,7 @@ TOOLS = [
 ]
 
 
-def run_showrunner(goal: str, db: Session) -> dict:
+def run_showrunner(goal: str, db: Session, step_cb=None) -> dict:
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Production goal: {goal}"},
@@ -74,16 +74,21 @@ def run_showrunner(goal: str, db: Session) -> dict:
     trace: list[str] = []
     delegations: list[dict] = []
 
+    def log(msg: str):
+        trace.append(msg)
+        if step_cb:
+            step_cb(msg)
+
     def dispatch(name, args):
         if name == "list_library_scripts":
-            trace.append("Inspected the Library")
+            log("Inspected the Library")
             return ("result", _tool_list_scripts(db))
         if name == "get_script":
-            trace.append(f"Read script #{args.get('script_id')}")
+            log(f"Read script #{args.get('script_id')}")
             return ("result", _tool_get_script(db, int(args.get("script_id", 0))))
         if name == "run_script_breakdown":
             sid = int(args.get("script_id", 0))
-            trace.append(f"→ Delegated to Script Breakdown agent (script #{sid})")
+            log(f"Delegated to Script Breakdown agent (script #{sid})")
             res = parse_and_breakdown(db=db, script_id=sid)
             delegations.append({"agent": "Script Breakdown", "data": res})
             return ("result", json.dumps({
@@ -92,7 +97,7 @@ def run_showrunner(goal: str, db: Session) -> dict:
                 "budget": res.get("estimated_budget_range"),
             }))
         if name == "discover_ip":
-            trace.append(f"→ Delegated to IP Discovery agent ({args.get('genre')}, {args.get('era')})")
+            log(f"Delegated to IP Discovery agent ({args.get('genre')}, {args.get('era')})")
             res = discover_ip_remake(args.get("genre", ""), args.get("era", ""))
             delegations.append({"agent": "IP Discovery", "data": res})
             return ("result", json.dumps({
@@ -100,8 +105,9 @@ def run_showrunner(goal: str, db: Session) -> dict:
                 "match_score": res.get("match_score"),
             }))
         if name == "check_continuity":
-            trace.append("→ Delegated to Continuity agent")
-            res = check_continuity(args.get("filename", "footage.mp4"))
+            sid = int(args.get("script_id", 0))
+            log(f"Delegated to Continuity agent (script #{sid})")
+            res = check_continuity(db=db, script_id=sid)
             delegations.append({"agent": "Continuity", "data": res})
             return ("result", json.dumps({
                 "errors_found": res.get("errors_found"), "score": res.get("overall_score"),
@@ -109,9 +115,9 @@ def run_showrunner(goal: str, db: Session) -> dict:
         if name == "submit_plan":
             valid, err = schemas.validate(schemas.ShowrunnerPlan, args)
             if err:
-                trace.append(f"Rejected invalid plan ({err}); asking agent to fix")
+                log(f"Rejected invalid plan ({err}); asking agent to fix")
                 return ("result", json.dumps({"validation_error": err}))
-            trace.append("Synthesized production plan")
+            log("Synthesized production plan")
             return ("done", {
                 "status": "Completed",
                 "goal": goal,

@@ -40,7 +40,8 @@ class ScriptBreakdownRequest(BaseModel):
     script_id: int = 0
 
 class ContinuityRequest(BaseModel):
-    filename: str
+    filename: str = ""
+    script_id: int = 0
 
 @router.post("/discover-ip")
 async def discover_ip_endpoint(request: IPDiscoveryRequest):
@@ -70,8 +71,8 @@ async def script_breakdown_endpoint(request: ScriptBreakdownRequest, db: Session
     return {"status": "success", "data": result}
 
 @router.post("/check-continuity")
-async def check_continuity_endpoint(request: ContinuityRequest):
-    result = check_continuity(filename=request.filename)
+async def check_continuity_endpoint(request: ContinuityRequest, db: Session = Depends(get_db)):
+    result = check_continuity(filename=request.filename, db=db, script_id=request.script_id)
     return {"status": "success", "data": result}
 
 import json
@@ -353,6 +354,43 @@ class ShowrunnerRequest(BaseModel):
 @router.post("/showrunner/run")
 def showrunner_run(request: ShowrunnerRequest, db: Session = Depends(get_db)):
     return run_showrunner(request.goal, db)
+
+@router.get("/showrunner/stream")
+def showrunner_stream(goal: str):
+    """Server-Sent Events: stream the Showrunner's steps live, then the result.
+    Runs the agent in a worker thread with its own DB session (sessions aren't
+    thread-safe), pushing steps onto a queue the SSE generator drains."""
+    import json as _json
+    import queue
+    import threading
+    from fastapi.responses import StreamingResponse
+    from core.database import SessionLocal
+
+    q: "queue.Queue" = queue.Queue()
+    holder = {}
+
+    def worker():
+        db = SessionLocal()
+        try:
+            holder["result"] = run_showrunner(goal, db, step_cb=lambda m: q.put({"type": "step", "message": m}))
+        except Exception as e:
+            holder["result"] = {"status": "error", "message": str(e)}
+        finally:
+            db.close()
+            q.put(None)  # sentinel
+
+    threading.Thread(target=worker, daemon=True).start()
+
+    def gen():
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            yield f"data: {_json.dumps(item)}\n\n"
+        yield f"data: {_json.dumps({'type': 'done', 'result': holder.get('result')})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 @router.post("/dev/seed-sample-script")
 def seed_sample_script(db: Session = Depends(get_db)):
