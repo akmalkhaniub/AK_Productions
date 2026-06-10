@@ -1,300 +1,219 @@
+# 🎬 AK Productions — Studio OS
+
 <p align="center">
-  <h1 align="center">🎬 AK Productions — Studio OS</h1>
-  <p align="center">
-    <strong>The AI-Native Film Production Platform</strong><br/>
-    An agentic AI system that orchestrates autonomous, multimodal agents to power every stage of film & TV production.
-  </p>
-  <p align="center">
-    <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
-    <a href="./docs/README.md"><strong>📚 Design Docs</strong></a> · 
-    <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
-    <a href="./GCP_DEPLOYMENT.md"><strong>🚀 GCP Deployment</strong></a> · 
-    <a href="./LIP_READING_PROPOSAL.md"><strong>👄 Lip-Reading</strong></a> · 
-    <a href="./DANCE_CHOREOGRAPHY_PROPOSAL.md"><strong>🕺 Dance Choreography</strong></a> · 
-    <a href="#getting-started"><strong>📦 Getting Started</strong></a>
-  </p>
+  <img src="https://img.shields.io/badge/Next.js-16%20%7C%20App%20Router-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/Expo-SDK%2056-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo SDK 56">
+  <img src="https://img.shields.io/badge/FastAPI-Python%203.14-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI Python 3.14">
+  <img src="https://img.shields.io/badge/Google%20Gemini-2.5%20Pro-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini 2.5 Pro">
+  <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI">
+</p>
+
+<p align="center">
+  <strong>The AI-Native Film Production Platform</strong><br/>
+  An agentic AI system that orchestrates autonomous, multimodal agents to power every stage of film & TV production.
+</p>
+
+<p align="center">
+  <a href="./PITCH.md"><strong>📄 Startup Pitch</strong></a> · 
+  <a href="./docs/README.md"><strong>📚 Design Docs</strong></a> · 
+  <a href="./ARCHITECTURE.md"><strong>🏗 Architecture</strong></a> · 
+  <a href="./GCP_DEPLOYMENT.md"><strong>🚀 GCP Deployment</strong></a> · 
+  <a href="./LIP_READING_PROPOSAL.md"><strong>👄 Lip-Reading</strong></a> · 
+  <a href="./DANCE_CHOREOGRAPHY_PROPOSAL.md"><strong>🕺 Dance Choreography</strong></a> · 
+  <a href="#getting-started"><strong>📦 Getting Started</strong></a>
 </p>
 
 ---
 
-## What is AK Productions?
+## 📽️ What is Studio OS?
 
-AK Productions is a **multi-agent AI platform** for film & television production. Instead of one monolithic chatbot, it deploys a network of **7 specialized AI agents** — each purpose-built for a specific production workflow — that share a persistent PostgreSQL knowledge base.
+**Studio OS** by AK Productions is an AI-powered film and television production operating system. Instead of a single conversational bot, it deploys a collaborative network of **7 specialized autonomous agents** sharing a persistent PostgreSQL knowledge base to analyze video, draft scripts, evaluate actor performances, and generate dubbing audio.
 
-The platform's flagship capability is its **Multimodal Data Ingestion Engine**: paste a YouTube URL, and the system will download the video, feed it to **Google Gemini 2.5 Pro** (via Vertex AI), and automatically generate a structured, trilingual screenplay — complete with actor timestamps, scene topography, and camera angle descriptions.
+The platform's flagship capability is its **Multimodal Data Ingestion Engine**: input a YouTube URL, and the system automatically downloads the clip, runs deep video parsing via **Google Gemini 2.5 Pro** (Vertex AI), and outputs a structured, trilingual screenplay synced with actor timestamps, scene topography, and camera angles.
 
-> **Target Submission:** [Google for Startups: AI Agents Challenge 2026](https://devpost.com) — Deadline June 5, 2026
-
----
-
-## ✨ Key Features
-
-| Feature | Description |
-|---|---|
-| 🎬 **Multimodal Video Analysis** | Download YouTube videos and feed them directly to Gemini 2.5 Pro. The model watches the video and extracts dialogue, actor sequences, scene layouts, and camera angles — all in one pass. |
-| 🌐 **Trilingual Script Output** | Every line of dialogue is structured in **Urdu Script (اردو)**, **Roman Urdu**, and **English** simultaneously. |
-| 🔀 **Model-Agnostic AI** | Switch between **OpenAI GPT-4o-mini** and **Google Gemini 2.5 Pro** directly from the UI. Use the right model for the right job. |
-| 📚 **Persistent Script Library** | All extracted screenplays are saved to PostgreSQL. Browse, search, and revisit any script from the Library dashboard. |
-| 🖥 **Studio Script Viewer** | Split-screen view: embedded YouTube player on the left, synced screenplay on the right. Read the script as you watch the scene. |
-| ⏱ **Configurable Duration** | Don't download a 2-hour movie to test one scene. Set a duration limit (e.g., first 5 minutes) from the UI. |
-| 📡 **Studio Intelligence** | Connect YouTube (or track channels manually) and an agent compiles a daily brief of new uploads across the channels your studio follows — using free RSS feeds (no API quota) + transcripts — delivered to email/Slack. |
-| 🤖 **7 Specialized Agents** | Data Ingestion, IP Discovery, Script Breakdown, Acting Coach, Continuity, Auto-Dubbing, and Studio Intelligence — each with its own logic, prompts, and data pipeline. |
-| 📱 **Cross-Platform** | Web (Next.js), iOS & Android (Expo React Native), all hitting the same FastAPI backend. |
+> 🏆 **Target Submission:** [Google for Startups: AI Agents Challenge 2026](https://devpost.com)
 
 ---
 
-## 🏗 Architecture
+## 🎨 System Architecture
+
+Studio OS separates user control panels (web and mobile apps) from the Python agent coordinator, routing queries through a type-safe FastAPI gateway to models and external scrapers.
 
 ```mermaid
-flowchart TD
-    subgraph Clients
-        W["🖥 Next.js Web Dashboard"]
-        M["📱 Expo React Native Mobile"]
+graph TD
+    classDef client fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#5b21b6;
+    classDef gateway fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef agent fill:#fff7ed,stroke:#ea580c,stroke-width:2px,color:#9a3412;
+    classDef model fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#991b1b;
+    classDef data fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534;
+
+    W["🖥 Next.js 16 Web Dashboard"] -->|REST / JSON| API["API Gateway (FastAPI)"]
+    M["📱 Expo React Native Mobile"] -->|REST / JSON| API
+    
+    API <--> DB[("PostgreSQL Database")]
+    API --> AgentSwarm
+    
+    subgraph AgentSwarm [AI Agent Network]
+        DI["📥 Data Ingestion"]
+        IP["🔍 IP Discovery"]
+        SB["📄 Script Breakdown"]
+        AC["🎭 Acting Coach"]
+        CA["🎯 Continuity"]
+        AD["🌍 Auto-Dubbing"]
     end
+    
+    DI -->|yt-dlp| YT[YouTube Data Stream]
+    DI -->|Multimodal Vision| Gemini["Google Gemini 2.5 Pro"]
+    DI -->|Text Ingestion| GPT["OpenAI GPT-4o-mini"]
+    
+    IP --> GPT
+    SB --> GPT
+    AC --> Gemini
+    CA --> Gemini
+    AD --> Gemini
 
-    subgraph Backend["FastAPI Backend"]
-        API["API Gateway"]
-        DB[("PostgreSQL")]
-
-        subgraph Agents["AI Agent Network"]
-            DI["📥 Data Ingestion"]
-            IP["🔍 IP Discovery"]
-            SB["📄 Script Breakdown"]
-            AC["🎭 Acting Coach"]
-            CA["🎯 Continuity"]
-            AD["🌍 Auto-Dubbing"]
-        end
-    end
-
-    subgraph AI["AI Model Layer"]
-        G["Gemini 2.5 Pro — Vertex AI"]
-        O["OpenAI GPT-4o-mini"]
-    end
-
-    subgraph Data["Data Sources"]
-        YT["YouTube — yt-dlp"]
-    end
-
-    W <-->|REST| API
-    M <-->|REST| API
-    API <--> DB
-    API --> Agents
-    DI --> YT
-    DI --> G
-    DI --> O
-    IP --> O
-    SB --> O
-    AC --> G
-    CA --> G
+    class W,M client;
+    class API gateway;
+    class DI,IP,SB,AC,CA,AD agent;
+    class Gemini,GPT model;
+    class YT,DB data;
+    
+    style AgentSwarm fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,stroke-dasharray: 5 5;
 ```
+
+---
+
+## ✨ Key Platform Features
+
+| Feature | Technical Capability |
+|---|---|
+| 🎬 **Multimodal Video Analysis** | Downloads clips via `yt-dlp` and runs video-frame scanning via Gemini 2.5 Pro to extract dialogue, character presence, scene layout, and camera angles in one pass. |
+| 🌐 **Trilingual Script Output** | Formats screenplays with dialogue simultaneously in **Urdu Script (اردو)**, **Roman Urdu**, and **English** for international co-productions. |
+| 🔀 **Runtime Model Switcher** | Hot-swaps backend generation routing between **OpenAI GPT-4o-mini** and **Google Gemini 2.5 Pro** directly from the UI settings panel. |
+| 🖥 **Studio Script Viewer** | Interactive, synced split-screen display: YouTube video player on the left panel, time-coded screenplay on the right panel. |
+| ⏱ **Configurable Duration Limits** | Restricts video downloads (e.g., first 5 minutes) to run quick testing and save API token costs. |
+| 📡 **Studio Intelligence Agent** | Monitors designated channels using feed aggregators and transcript scraping to generate daily production briefs delivered to email/Slack. |
+| 📱 **Full Cross-Platform Coverage** | Complete web dashboard (Next.js 16) and cross-platform mobile app (Expo React Native 56) hitting a single FastAPI backend. |
+
+---
+
+## 🤖 The 7 Specialized Agents
+
+*   **📥 Data Ingestion Agent**: Paste a video URL to execute **Fast Transcript Extraction** or **Deep Video Analysis** (MP4 video download + Gemini vision processing). Screenplays are outputted in trilingual form and saved to PostgreSQL.
+*   **🔍 IP Discovery Agent**: Surfaces public domain or forgotten properties based on genre/era inputs, generating modern adaptation pitches with target audience analysis.
+*   **📄 Script Breakdown Agent**: Parses uploaded screenplay PDFs to extract cast structures, prop lists, wardrobe settings, locations, and estimated production budget.
+*   **🎭 Acting Coach Agent**: Analyzes `.wav` audition uploads (pitch variance, emotional tempo, clarity) to provide objective vocal and performance feedback.
+*   **🎯 Continuity Agent**: Scans video frames from consecutive takes to identify continuity errors in props, wardrobe, or lighting setup.
+*   **🌍 Auto-Dubbing Agent**: Transcribes dialogue, translates the text, and compiles synthesized voice dubs for target international distribution markets.
+*   **📡 Studio Intelligence Agent**: Scans industry channels and compiles automated summaries of trending topics and content releases.
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Web** | Next.js 16 · React 19 · Tailwind CSS v4 · Framer Motion |
-| **Mobile** | Expo SDK 56 · React Native · Moti · Reanimated |
-| **Backend** | FastAPI · Python 3.14 · Pydantic · SQLAlchemy |
-| **Database** | PostgreSQL |
-| **AI (Multimodal)** | Google Gemini 2.5 Pro (Developer API; Vertex AI optional) |
-| **AI (Text)** | OpenAI GPT-4o-mini (model selectable at runtime) |
-| **Video Pipeline** | yt-dlp · YouTube Transcript API |
-| **Infra** | Google Cloud Platform · Vertex AI (optional) |
-| **Design** | Switchable multi-theme design system (`next-themes` · `data-theme`) |
+-   **Frontend (Web)**: Next.js 16 (App Router) · React 19 · Tailwind CSS v4 · Framer Motion
+-   **Frontend (Mobile)**: Expo SDK 56 · React Native · Moti · Reanimated
+-   **Backend**: FastAPI (Python 3.14) · Pydantic · SQLAlchemy ORM
+-   **Database**: PostgreSQL
+-   **AI Providers**: Google Gemini 2.5 Pro (Vertex AI / Developer API) · OpenAI GPT-4o-mini
+-   **Media Processing**: `yt-dlp` · YouTube Transcript API · FFmpeg
 
 ---
 
 ## 📚 Design & Architecture Docs
 
-Every significant design decision is recorded in [`docs/`](./docs/README.md):
+Detailed design plans and decision records are maintained inside the [`docs/`](./docs/README.md) directory:
 
-| Doc | Covers |
-|---|---|
-| [Architecture](./docs/01-architecture.md) | System shape, agent roster, request flow |
-| [Agentic Patterns](./docs/02-agentic-patterns.md) | Tool-loops, error recovery, guardrails, reflection, orchestration |
-| [LLM Fallback Chain](./docs/03-llm-fallback-chain.md) | Multi-provider router; cost vs capability routing |
-| [Model Configuration](./docs/04-model-configuration.md) | Centralized config + runtime admin panel |
-| [Studio Intelligence](./docs/05-studio-intelligence.md) | YouTube digest agent design |
-| [Design System](./docs/06-design-system.md) | Switchable multi-theme UI |
-| [Decision Log (ADRs)](./docs/07-decision-log.md) | Chronological decisions + trade-offs |
-
----
-
-## 🤖 AI Agents
-
-### 📥 Data Ingestion Agent
-Paste a YouTube URL. Choose between **Fast Transcript Extraction** (subtitles + LLM) or **Deep Video Analysis** (MP4 download + Gemini vision). Select your preferred AI model and duration limit. The agent structures the output as a trilingual screenplay and persists it to PostgreSQL.
-
-### 🔍 IP Discovery Agent
-Specify a genre and era. The agent uses LLMs to surface forgotten intellectual properties and generate modern remake pitches with audience fit scores.
-
-### 📄 Script Breakdown Agent
-Upload a screenplay PDF. The agent parses it and extracts cast requirements, props, wardrobe, vehicles, VFX needs, and estimated budget.
-
-### 🎭 Acting Coach Agent
-Upload a `.wav` audition recording. The agent extracts pitch variance, tempo, emotional mapping, and clarity metrics to provide objective performance feedback.
-
-### 🎯 Continuity Agent
-Upload frames from different takes. Computer vision compares them to flag inconsistencies in props, lighting, and wardrobe.
-
-### 🌍 Auto-Dubbing Agent
-Transcribes audio, translates it via LLM, and generates synthesized voice dubs for foreign language markets.
+-   [Architecture Overview](./docs/01-architecture.md) — System boundaries, agent specifications, database schemas.
+-   [Agentic Design Patterns](./docs/02-agentic-patterns.md) — Tool-use loops, human-in-the-loop validation, and reflection.
+-   [LLM Fallback Chain](./docs/03-llm-fallback-chain.md) — Multi-model routing logic and cost-balancing rules.
+-   [Model Configurator](./docs/04-model-configuration.md) — Dynamic runtime model configuration.
+-   [Studio Intelligence](./docs/05-studio-intelligence.md) — YouTube intelligence feeds and scraping pipelines.
+-   [Design Systems](./docs/06-design-system.md) — Theme configurations (`next-themes`).
+-   [Decision Logs (ADRs)](./docs/07-decision-log.md) — Architectural Decision Records.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Node.js** 20+
+- **Node.js** v20+
 - **Python** 3.14+
 - **PostgreSQL** 15+
-- **Google Cloud SDK** (authenticated via `gcloud auth application-default login`)
+- **GCP SDK** (Authenticated for Vertex AI, if using Cloud Models)
 
-### 1. Clone & Configure
-
+### 1. Configure Environments
+Clone the repository:
 ```bash
-git clone https://github.com/your-repo/AK_Productions.git
+git clone https://github.com/akmalkhaniub/AK_Productions.git
 cd AK_Productions
 ```
 
 Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/ak_productions
-OPENAI_API_KEY=sk-your-openai-key
-
-# Gemini Developer API key — required for multimodal video analysis.
-# Get one free at https://aistudio.google.com/apikey
-GEMINI_API_KEY=your-gemini-key
-
-# Comma-separated frontend origins allowed to call the API
+OPENAI_API_KEY=sk-your-openai-api-key
+GEMINI_API_KEY=your-gemini-api-key (Get one free at https://aistudio.google.com/apikey)
 CORS_ORIGINS=http://localhost:3000
-
-# Optional: set true to use Vertex AI instead (text only — video analysis is
-# disabled on Vertex because the Files API is unavailable there)
-# GEMINI_USE_VERTEX=true
-# GCP_PROJECT=your-gcp-project
 ```
 
-And `frontend/.env.local` (points the web app at the backend):
+Create `frontend/.env.local`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-> **Models are configurable at runtime** from the **Admin** panel (`/admin`) — no redeploy needed. Defaults live in `backend/core/config.py`.
-
-### 2. Backend
-
+### 2. Startup the Backend
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --port 8000 --reload
 ```
-The API server starts at `http://localhost:8000`.
+API runs at `http://localhost:8000`.
 
-### 3. Web Dashboard
-
+### 3. Startup the Web Panel
 ```bash
-cd frontend
+cd ../frontend
 npm install
 npm run dev
 ```
-Open `http://localhost:3000`.
+Dashboard runs at `http://localhost:3000`.
 
-### 4. Mobile App
-
+### 4. Startup the Mobile Client
 ```bash
-cd mobile_app
+cd ../mobile_app
 npm install
 npx expo start
 ```
 
 ---
 
-## 📂 Project Structure
+## 🗺 Platform Roadmap
 
-```
-AK_Productions/
-├── frontend/                   # Next.js 16 Web Dashboard
-│   └── src/app/
-│       ├── data-ingestion/     # YouTube ingestion UI + config panel
-│       ├── library/            # Script library + [id] detail viewer
-│       ├── ip-discovery/       # IP Discovery agent UI
-│       ├── acting-coach/       # Acting Coach agent UI
-│       ├── script-breakdown/   # Script Breakdown agent UI
-│       ├── continuity-agent/   # Continuity agent UI
-│       ├── auto-dubbing/       # Auto-Dubbing agent UI
-│       └── pipeline/           # Multi-step pipeline wizard
-├── backend/                    # FastAPI Backend
-│   ├── api/routes.py           # All API endpoints
-│   ├── core/
-│   │   ├── database.py         # PostgreSQL connection
-│   │   └── models.py           # SQLAlchemy models
-│   └── ai_agents/
-│       ├── data_ingestion/
-│       │   ├── youtube_scraper.py      # Transcript extraction + LLM
-│       │   ├── video_downloader.py     # yt-dlp video download
-│       │   └── gemini_analyzer.py      # Gemini 2.5 Pro multimodal
-│       ├── pre_production/
-│       │   ├── ip_discovery.py
-│       │   └── script_breakdown.py
-│       ├── casting/
-│       │   └── acting_coach.py
-│       ├── production/
-│       │   └── continuity_agent.py
-│       └── post_production/
-│           └── auto_dubber.py
-├── mobile_app/                 # Expo React Native App
-├── PITCH.md                    # 📄 Startup pitch document
-└── README.md                   # This file
-```
+- [x] Multi-agent FastAPI backend framework.
+- [x] Ingestion pipeline (transcripts, subtitles, and metadata extraction).
+- [x] Multimodal video frame parsing using Gemini 2.5 Pro.
+- [x] Split-screen Studio Script Viewer (synced video player + screenplay).
+- [x] Multi-theme dark mode system.
+- [x] Acting Coach audition analysis (pitch, tempo, tone checks).
+- [ ] Batch processing for full drama series episodes.
+- [ ] Real-time script annotations and comments feed.
+- [ ] SaaS multi-tenant billing and subscription gate.
 
 ---
 
-## 📄 Startup Pitch
+## 🚀 Advanced R&D Proposals
 
-For the full startup narrative — problem statement, market opportunity ($370B), competitive differentiation, and roadmap — see **[PITCH.md](./PITCH.md)**.
-
----
-
-## 📸 Screenshots
-
-> _Coming soon: Data Ingestion Engine, Library Dashboard, Studio Script Viewer._
+We are actively designing state-of-the-art expansion modules for the Studio OS:
+1. **[AI Lip-Reading & Speech Reconstruction](./LIP_READING_PROPOSAL.md)**: Generating synced speech tracks from silent video footage.
+2. **[AI Music-to-Motion Choreography](./DANCE_CHOREOGRAPHY_PROPOSAL.md)**: Designing automated, audio-synced choreography timelines.
 
 ---
 
-## 🗺 Roadmap
+## 🏁 License & Contact
 
-- [x] Multi-agent FastAPI architecture (6 agents)
-- [x] YouTube ingestion pipeline (yt-dlp + transcripts)
-- [x] Gemini 2.5 Pro multimodal video analysis (Vertex AI)
-- [x] Model-agnostic UI (OpenAI ↔ Gemini switcher)
-- [x] PostgreSQL persistence + searchable Library
-- [x] Studio Script Viewer (split-screen video + screenplay)
-- [x] Dark/Light theme system
-- [x] Acting Coach v2 (compare performance vs. extracted scripts)
-- [ ] Batch ingestion (ingest full drama series)
-- [ ] Real-time collaborative annotations
-- [ ] SaaS multi-tenant deployment
+Distributed under the MIT License. See `LICENSE` for more information.
 
----
-
-## 🚀 Future Expansion Proposals
-
-We are actively researching and designing state-of-the-art expansion capabilities for Studio OS:
-1. **[AI Lip-Reading & Dialogue Reconstruction](./LIP_READING_PROPOSAL.md)**: Generate transcripts and synced dialogue tracks from actor lip movements in silent videos or live streams.
-2. **[AI Music-to-Motion Dance Choreography](./DANCE_CHOREOGRAPHY_PROPOSAL.md)**: Automatically suggest dynamic dance choreographies matching any music track.
-
----
-
-## License
-
-MIT
-
----
-
-<p align="center">
-  <strong>AK Productions</strong> — Where AI meets cinema.<br/>
-  <em>Built with ❤️ using Gemini 2.5 Pro, OpenAI, FastAPI, Next.js, and PostgreSQL.</em>
-</p>
+*Developer: Akmal Khan*  
+*Email: akmal.shahbaz@iub.edu.pk*  
+*Repository Link: [https://github.com/akmalkhaniub/AK_Productions](https://github.com/akmalkhaniub/AK_Productions)*
