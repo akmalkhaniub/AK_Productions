@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check, Network } from "lucide-react";
+import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check, Network, Music, Eye } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +37,8 @@ export function Header() {
     { name: "IP Discovery", href: "/ip-discovery", icon: Sparkles },
     { name: "Acting Coach", href: "/acting-coach", icon: Clapperboard },
     { name: "Auto-Dubbing", href: "/auto-dubbing", icon: Mic2 },
+    { name: "Choreography", href: "/choreography", icon: Music },
+    { name: "Lip-Reading", href: "/lip-reading", icon: Eye },
     { name: "Script Breakdown", href: "/script-breakdown", icon: FileText },
     { name: "Continuity", href: "/continuity-agent", icon: Focus },
     { name: "Studio Intel", href: "/industry-intel", icon: Radar },

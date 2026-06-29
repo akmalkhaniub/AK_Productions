@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ai_agents.pre_production.ip_discovery import discover_ip_remake
@@ -14,6 +14,8 @@ from ai_agents.data_ingestion.video_downloader import download_youtube_video
 from ai_agents.data_ingestion.gemini_analyzer import analyze_video_with_gemini
 from ai_agents.industry_intel import youtube_source, intel_agent, delivery
 from ai_agents.orchestrator.showrunner import run_showrunner
+from ai_agents.production.choreography_agent import generate_choreography
+from ai_agents.production.lip_reader_agent import restore_silent_video_dialogue
 from core import llm
 
 router = APIRouter()
@@ -74,6 +76,85 @@ async def script_breakdown_endpoint(request: ScriptBreakdownRequest, db: Session
 async def check_continuity_endpoint(request: ContinuityRequest, db: Session = Depends(get_db)):
     result = check_continuity(filename=request.filename, db=db, script_id=request.script_id)
     return {"status": "success", "data": result}
+
+@router.post("/choreography/generate")
+async def choreography_generate_endpoint(
+    style: str = Form("hip-hop"),
+    track_name: str = Form("Preset Track"),
+    file: UploadFile | None = File(None)
+):
+    import shutil
+    import tempfile
+    import os
+    
+    temp_file_path = ""
+    if file is not None:
+        # Save upload to a temp file
+        suffix = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            temp_file_path = tmp.name
+    
+    try:
+        result = generate_choreography(
+            track_name=track_name,
+            file_path=temp_file_path,
+            style=style
+        )
+        return {"status": "success", "data": result}
+    finally:
+        # Clean up temp file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
+
+@router.post("/lip-reading/restore")
+async def lip_reading_restore_endpoint(
+    file: UploadFile | None = File(None),
+    filename: str = Form("silent_confrontation.mp4"),
+    custom_segments_json: str | None = Form(None)
+):
+    import shutil
+    import tempfile
+    import os
+    import json
+    import uuid
+    from ai_agents.production.lip_reader_agent import TEMP_DIR
+    
+    target_filename = filename
+    temp_file_path = ""
+    
+    custom_segments = None
+    if custom_segments_json:
+        try:
+            custom_segments = json.loads(custom_segments_json)
+        except Exception:
+            pass
+            
+    if file is not None:
+        # Save to temp_videos
+        safe_name = f"upload_{uuid.uuid4().hex}_{file.filename}"
+        temp_file_path = os.path.join(TEMP_DIR, safe_name)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        target_filename = safe_name
+        
+    try:
+        result = await restore_silent_video_dialogue(
+            filename=target_filename,
+            custom_segments=custom_segments
+        )
+        return result
+    except Exception as e:
+        # Clean up file on error
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
+        return {"status": "error", "message": str(e)}
 
 import json
 from sqlalchemy.orm import Session

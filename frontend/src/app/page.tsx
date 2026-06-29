@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video } from "lucide-react";
+import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video, Music, Eye } from "lucide-react";
 import Link from "next/link";
 
 const containerVariants = {
@@ -20,6 +20,8 @@ const agents = [
   { name: "Script Breakdown", href: "/script-breakdown", icon: FileText, desc: "An autonomous agent reads a Library script with tools, then extracts cast, props, wardrobe, VFX and a budget." },
   { name: "AI Acting Coach", href: "/acting-coach", icon: Clapperboard, desc: "Compares an audition against the written scene for prosody, subtext, and emotional resonance." },
   { name: "Auto-Dubbing", href: "/auto-dubbing", icon: Mic2, desc: "Localization engine: translates audio, clones voice timbre, and generates lip-synced video." },
+  { name: "AI Choreographer", href: "/choreography", icon: Music, desc: "Procedurally synchronizes and designs 3D skeletal dance routines matching any soundtrack or beat pattern." },
+  { name: "AI Lip-Reader", href: "/lip-reading", icon: Eye, desc: "Visual Speech Recognition (VSR) pipeline: reads lip movements from silent takes and reconstructs dubbed audio." },
   { name: "Continuity Agent", href: "/continuity-agent", icon: Focus, desc: "A vision-language pipeline that scans frame sequences to catch wardrobe and prop discrepancies on-set." },
   { name: "Studio Intelligence", href: "/industry-intel", icon: Radar, desc: "A daily agentic brief of what dropped across the channels your studio tracks — and why it matters." },
 ];
