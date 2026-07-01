@@ -32,6 +32,7 @@ export function Header() {
   const navLinks = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Showrunner", href: "/showrunner", icon: Network },
+    { name: "Series Intel", href: "/series-intelligence", icon: Network },
     { name: "Data Ingestion", href: "/data-ingestion", icon: Sparkles },
     { name: "Library", href: "/library", icon: FileText },
     { name: "IP Discovery", href: "/ip-discovery", icon: Sparkles },

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video, Music, Eye } from "lucide-react";
+import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video, Music, Eye, Network } from "lucide-react";
 import Link from "next/link";
 
 const containerVariants = {
@@ -16,6 +16,7 @@ const itemVariants = {
 
 const agents = [
   { name: "Data Ingestion", href: "/data-ingestion", icon: Video, desc: "Paste a YouTube URL — the engine downloads it, watches it with Gemini, and emits a structured trilingual screenplay." },
+  { name: "Series Intelligence", href: "/series-intelligence", icon: Network, desc: "A narrative analysis swarm that consolidates a multi-episode Lore Bible and catches plot or timeline inconsistencies." },
   { name: "IP Discovery", href: "/ip-discovery", icon: Sparkles, desc: "Scans historical narratives to surface public-domain stories with high market viability for modern remakes." },
   { name: "Script Breakdown", href: "/script-breakdown", icon: FileText, desc: "An autonomous agent reads a Library script with tools, then extracts cast, props, wardrobe, VFX and a budget." },
   { name: "AI Acting Coach", href: "/acting-coach", icon: Clapperboard, desc: "Compares an audition against the written scene for prosody, subtext, and emotional resonance." },
