@@ -16,6 +16,7 @@ from ai_agents.industry_intel import youtube_source, intel_agent, delivery
 from ai_agents.orchestrator.showrunner import run_showrunner
 from ai_agents.production.choreography_agent import generate_choreography
 from ai_agents.production.lip_reader_agent import restore_silent_video_dialogue
+from ai_agents.production.video_continuity_agent import compare_takes_for_continuity
 from core import llm
 
 router = APIRouter()
@@ -154,6 +155,56 @@ async def lip_reading_restore_endpoint(
                 os.remove(temp_file_path)
             except Exception:
                 pass
+        return {"status": "error", "message": str(e)}
+
+@router.post("/continuity/compare-takes")
+async def continuity_compare_takes_endpoint(
+    file1: UploadFile | None = File(None),
+    file2: UploadFile | None = File(None),
+    take1_name: str = Form("take_1_confrontation.mp4"),
+    take2_name: str = Form("take_2_confrontation.mp4")
+):
+    import shutil
+    import os
+    import uuid
+    from ai_agents.production.video_continuity_agent import TEMP_DIR
+    
+    t1_target = take1_name
+    t2_target = take2_name
+    
+    t1_temp = ""
+    t2_temp = ""
+    
+    # Save upload 1
+    if file1 is not None:
+        safe_name_1 = f"upload_{uuid.uuid4().hex}_{file1.filename}"
+        t1_temp = os.path.join(TEMP_DIR, safe_name_1)
+        with open(t1_temp, "wb") as buffer:
+            shutil.copyfileobj(file1.file, buffer)
+        t1_target = safe_name_1
+
+    # Save upload 2
+    if file2 is not None:
+        safe_name_2 = f"upload_{uuid.uuid4().hex}_{file2.filename}"
+        t2_temp = os.path.join(TEMP_DIR, safe_name_2)
+        with open(t2_temp, "wb") as buffer:
+            shutil.copyfileobj(file2.file, buffer)
+        t2_target = safe_name_2
+
+    try:
+        result = await compare_takes_for_continuity(
+            take1_path=t1_target,
+            take2_path=t2_target
+        )
+        return result
+    except Exception as e:
+        # Clean up files on error
+        for path in [t1_temp, t2_temp]:
+            if path and os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
         return {"status": "error", "message": str(e)}
 
 import json

@@ -40,7 +40,7 @@ export function Header() {
     { name: "Choreography", href: "/choreography", icon: Music },
     { name: "Lip-Reading", href: "/lip-reading", icon: Eye },
     { name: "Script Breakdown", href: "/script-breakdown", icon: FileText },
-    { name: "Continuity", href: "/continuity-agent", icon: Focus },
+    { name: "Continuity", href: "/continuity-detector", icon: Focus },
     { name: "Studio Intel", href: "/industry-intel", icon: Radar },
     { name: "Admin", href: "/admin", icon: Settings2 },
   ];

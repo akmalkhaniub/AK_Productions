@@ -22,7 +22,7 @@ const agents = [
   { name: "Auto-Dubbing", href: "/auto-dubbing", icon: Mic2, desc: "Localization engine: translates audio, clones voice timbre, and generates lip-synced video." },
   { name: "AI Choreographer", href: "/choreography", icon: Music, desc: "Procedurally synchronizes and designs 3D skeletal dance routines matching any soundtrack or beat pattern." },
   { name: "AI Lip-Reader", href: "/lip-reading", icon: Eye, desc: "Visual Speech Recognition (VSR) pipeline: reads lip movements from silent takes and reconstructs dubbed audio." },
-  { name: "Continuity Agent", href: "/continuity-agent", icon: Focus, desc: "A vision-language pipeline that scans frame sequences to catch wardrobe and prop discrepancies on-set." },
+  { name: "Continuity Detector", href: "/continuity-detector", icon: Focus, desc: "A visual comparison pipeline that scans consecutive video takes to detect prop, wardrobe, and lighting errors." },
   { name: "Studio Intelligence", href: "/industry-intel", icon: Radar, desc: "A daily agentic brief of what dropped across the channels your studio tracks — and why it matters." },
 ];
 
