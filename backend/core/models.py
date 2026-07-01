@@ -92,3 +92,43 @@ class IntelBrief(Base):
     headline = Column(String)
     content = Column(Text)  # JSON string: { headline, sections[], agent_trace[] }
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class Series(Base):
+    __tablename__ = "series"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    episodes = relationship("SeriesEpisode", back_populates="series", cascade="all, delete-orphan")
+    lore_items = relationship("SeriesLore", back_populates="series", cascade="all, delete-orphan")
+
+
+class SeriesEpisode(Base):
+    __tablename__ = "series_episodes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    series_id = Column(Integer, ForeignKey("series.id"), nullable=False)
+    episode_number = Column(Integer, nullable=False)
+    video_id = Column(String, nullable=True)
+    title = Column(String, nullable=True)
+    script_content = Column(Text, nullable=True) # JSON string of the structured script
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    series = relationship("Series", back_populates="episodes")
+
+
+class SeriesLore(Base):
+    __tablename__ = "series_lore"
+
+    id = Column(Integer, primary_key=True, index=True)
+    series_id = Column(Integer, ForeignKey("series.id"), nullable=False)
+    category = Column(String)  # e.g., "character", "prop", "timeline", "geography"
+    entity_name = Column(String, index=True)  # e.g. "Ayesha", "Pocket Watch"
+    lore_description = Column(Text)
+    source_episodes = Column(String)  # Comma-separated list of episode numbers
+    last_updated = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    series = relationship("Series", back_populates="lore_items")
