@@ -7,7 +7,7 @@ from ai_agents.post_production.auto_dubber import generate_dub
 from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
-from core.models import Project, DramaScript, ConnectedAccount, IntelBrief
+from core.models import Project, DramaScript, ConnectedAccount, IntelBrief, Series, SeriesEpisode, SeriesLore
 from core import config, settings_service
 from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
@@ -206,6 +206,147 @@ async def continuity_compare_takes_endpoint(
                 except Exception:
                     pass
         return {"status": "error", "message": str(e)}
+
+# --- Series Batch Ingestion & Narrative Intelligence ---
+
+class SeriesCreate(BaseModel):
+    title: str
+    description: str = ""
+
+class EpisodeIngest(BaseModel):
+    episode_number: int
+    title: str = ""
+    script_content: str
+
+@router.post("/series")
+def create_series_endpoint(payload: SeriesCreate, db: Session = Depends(get_db)):
+    series = Series(title=payload.title, description=payload.description)
+    db.add(series)
+    db.commit()
+    db.refresh(series)
+    return {"status": "success", "data": series}
+
+@router.get("/series")
+def list_series_endpoint(db: Session = Depends(get_db)):
+    series_list = db.query(Series).all()
+    results = []
+    for s in series_list:
+        ep_count = db.query(SeriesEpisode).filter(SeriesEpisode.series_id == s.id).count()
+        results.append({
+            "id": s.id,
+            "title": s.title,
+            "description": s.description,
+            "episode_count": ep_count,
+            "created_at": s.created_at.isoformat()
+        })
+    return {"status": "success", "data": results}
+
+@router.get("/series/{series_id}")
+def get_series_endpoint(series_id: int, db: Session = Depends(get_db)):
+    s = db.query(Series).filter(Series.id == series_id).first()
+    if not s:
+        return {"status": "error", "message": "Series not found"}
+    episodes = db.query(SeriesEpisode).filter(SeriesEpisode.series_id == series_id).order_by(SeriesEpisode.episode_number).all()
+    eps = [{
+        "id": ep.id,
+        "episode_number": ep.episode_number,
+        "title": ep.title,
+        "created_at": ep.created_at.isoformat()
+    } for ep in episodes]
+    return {
+        "status": "success",
+        "data": {
+            "id": s.id,
+            "title": s.title,
+            "description": s.description,
+            "episodes": eps
+        }
+    }
+
+@router.post("/series/{series_id}/episodes")
+def add_episode_endpoint(series_id: int, payload: EpisodeIngest, db: Session = Depends(get_db)):
+    s = db.query(Series).filter(Series.id == series_id).first()
+    if not s:
+        return {"status": "error", "message": "Series not found"}
+    
+    existing = db.query(SeriesEpisode).filter(
+        SeriesEpisode.series_id == series_id,
+        SeriesEpisode.episode_number == payload.episode_number
+    ).first()
+    
+    if existing:
+        existing.title = payload.title
+        existing.script_content = payload.script_content
+        db.commit()
+        db.refresh(existing)
+        return {"status": "success", "data": existing, "updated": True}
+    else:
+        new_ep = SeriesEpisode(
+            series_id=series_id,
+            episode_number=payload.episode_number,
+            title=payload.title,
+            script_content=payload.script_content
+        )
+        db.add(new_ep)
+        db.commit()
+        db.refresh(new_ep)
+        return {"status": "success", "data": new_ep, "updated": False}
+
+@router.post("/series/{series_id}/run-narrative-sweep")
+def run_narrative_sweep_endpoint(series_id: int, db: Session = Depends(get_db)):
+    from ai_agents.pre_production.narrative_agent import run_narrative_sweep
+    result = run_narrative_sweep(series_id, db)
+    return result
+
+@router.get("/series/{series_id}/lore-bible")
+def get_lore_bible_endpoint(series_id: int, db: Session = Depends(get_db)):
+    lore_items = db.query(SeriesLore).filter(SeriesLore.series_id == series_id).order_by(SeriesLore.category, SeriesLore.entity_name).all()
+    results = [{
+        "id": l.id,
+        "category": l.category,
+        "entity_name": l.entity_name,
+        "lore_description": l.lore_description,
+        "source_episodes": l.source_episodes,
+        "last_updated": l.last_updated.isoformat()
+    } for l in lore_items]
+    return {"status": "success", "data": results}
+
+@router.post("/dev/seed-sample-series")
+def seed_sample_series_endpoint(db: Session = Depends(get_db)):
+    existing = db.query(Series).filter(Series.title == "The Last Letter Trilogy").first()
+    if existing:
+        return {"status": "success", "data": {"id": existing.id, "created": False}}
+        
+    series = Series(
+        title="The Last Letter Trilogy",
+        description="A three-episode TV trilogy tracking Ayesha's final letters to her father at Lahore railway station."
+    )
+    db.add(series)
+    db.commit()
+    db.refresh(series)
+    
+    ep1 = SeriesEpisode(
+        series_id=series.id,
+        episode_number=1,
+        title="The Storm Gathers",
+        script_content="Ayesha arrives at Lahore platform 2. Rain is pouring down. She stands under the rusted tin roof wearing a heavy woolen winter shawl. She holds a folded letter. Imran approaches, hands her the mother's pocket watch. Imran says: 'This watch has been broken and frozen at 9:05 since she left us.' Ayesha confronts him. Later, Ayesha tears up the letter and throws it onto the wet tracks."
+    )
+    ep2 = SeriesEpisode(
+        series_id=series.id,
+        episode_number=2,
+        title="Frozen Hands",
+        script_content="Ayesha is in her hotel room. She opens her handbag, pulls out the identical pristine, dry letter to read it again. Meanwhile, Imran sits in a cafe, pulls out the pocket watch and checks the active moving time, saying 'it still runs perfectly, keeping the rhythm of my days'."
+    )
+    ep3 = SeriesEpisode(
+        series_id=series.id,
+        episode_number=3,
+        title="Last Train to Lahore",
+        script_content="Setting is Lahore platform 2. Ayesha is standing in the hot summer heat of 1952. However, she is wearing the identical heavy woolen winter shawl from Episode 1. She waits as the last train to Lahore approaches. The Station Guard announces: 'Last train to Lahore — platform two!'"
+    )
+    db.add_all([ep1, ep2, ep3])
+    db.commit()
+    
+    return {"status": "success", "data": {"id": series.id, "created": True}}
 
 import json
 from sqlalchemy.orm import Session
