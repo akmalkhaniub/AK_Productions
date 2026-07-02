@@ -132,3 +132,15 @@ class SeriesLore(Base):
     last_updated = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     series = relationship("Series", back_populates="lore_items")
+
+
+class ScriptAnnotation(Base):
+    __tablename__ = "script_annotations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    script_id = Column(Integer, ForeignKey("drama_scripts.id"), nullable=False)
+    line_index = Column(Integer, nullable=False)
+    category = Column(String)  # e.g., "dialogue", "topography"
+    author = Column(String)  # e.g., "User", "AI Acting Coach", "AI Continuity Agent"
+    text = Column(Text)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
