@@ -7,7 +7,7 @@ from ai_agents.post_production.auto_dubber import generate_dub
 from ai_agents.pre_production.script_breakdown import parse_and_breakdown
 from ai_agents.production.continuity_agent import check_continuity
 from core.database import get_db
-from core.models import Project, DramaScript, ConnectedAccount, IntelBrief, Series, SeriesEpisode, SeriesLore
+from core.models import Project, DramaScript, ConnectedAccount, IntelBrief, Series, SeriesEpisode, SeriesLore, ScriptAnnotation
 from core import config, settings_service
 from ai_agents.data_ingestion.youtube_scraper import ingest_youtube_drama
 from ai_agents.data_ingestion.video_downloader import download_youtube_video
@@ -434,6 +434,113 @@ def get_library_item(script_id: int, db: Session = Depends(get_db)):
             "data": json.loads(s.script_content)
         }
     }
+
+# --- Script Annotations & AI Feedback ---
+
+class AnnotationCreate(BaseModel):
+    line_index: int
+    category: str  # "dialogue" or "topography"
+    author: str = "User"
+    text: str
+
+class AgentFeedbackRequest(BaseModel):
+    line_index: int
+    category: str
+    agent_type: str  # "AI Acting Coach", "AI Continuity Agent", "AI Creative Director"
+    speaker: str = ""
+    dialogue_text: str = ""
+
+@router.get("/library/{script_id}/annotations")
+def get_script_annotations(script_id: int, db: Session = Depends(get_db)):
+    annotations = db.query(ScriptAnnotation).filter(ScriptAnnotation.script_id == script_id).order_by(ScriptAnnotation.created_at.asc()).all()
+    results = [{
+        "id": a.id,
+        "line_index": a.line_index,
+        "category": a.category,
+        "author": a.author,
+        "text": a.text,
+        "created_at": a.created_at.isoformat()
+    } for a in annotations]
+    return {"status": "success", "data": results}
+
+@router.post("/library/{script_id}/annotations")
+def create_script_annotation(script_id: int, payload: AnnotationCreate, db: Session = Depends(get_db)):
+    ann = ScriptAnnotation(
+        script_id=script_id,
+        line_index=payload.line_index,
+        category=payload.category,
+        author=payload.author,
+        text=payload.text
+    )
+    db.add(ann)
+    db.commit()
+    db.refresh(ann)
+    return {"status": "success", "data": ann}
+
+@router.delete("/library/{script_id}/annotations/{ann_id}")
+def delete_script_annotation(script_id: int, ann_id: int, db: Session = Depends(get_db)):
+    ann = db.query(ScriptAnnotation).filter(
+        ScriptAnnotation.script_id == script_id,
+        ScriptAnnotation.id == ann_id
+    ).first()
+    if not ann:
+        return {"status": "error", "message": "Annotation not found"}
+    db.delete(ann)
+    db.commit()
+    return {"status": "success", "message": "Annotation deleted"}
+
+@router.post("/library/{script_id}/annotations/agent-feedback")
+async def generate_agent_script_feedback(script_id: int, payload: AgentFeedbackRequest, db: Session = Depends(get_db)):
+    # Retrieve script info for context
+    script_item = db.query(DramaScript).filter(DramaScript.id == script_id).first()
+    context = ""
+    if script_item:
+        context = f"Scene Premise: {script_item.scene_description}."
+
+    agent_role = payload.agent_type
+    
+    prompt = f"""
+    You are an expert film industry professional acting as the {agent_role}.
+    {context}
+    
+    Evaluate the following screenplay component:
+    Category: {payload.category}
+    Speaker: {payload.speaker}
+    Content: "{payload.dialogue_text}"
+    
+    Provide a concise, professional comment/critique (2-3 sentences) from the perspective of the {agent_role}.
+    - If acting coach: discuss prosody, subtext, or emotional tone.
+    - If continuity: discuss wardrobe/prop risks or visual cues.
+    - If creative director: discuss blocking, cinematic subtext, or camera angles.
+    
+    Format the output as a clean text response without markdown block wrappers.
+    """
+
+    try:
+        content, provider = await llm.chat_raw_async([{"role": "user", "content": prompt}])
+        text_feedback = content.strip()
+    except Exception as e:
+        # Fallback mocks if offline/unconfigured
+        if "acting" in agent_role.lower():
+            text_feedback = f"[Mock Critique] As Acting Coach: {payload.speaker} should emphasize the pause before reading. The subtext indicates hesitation. Keep the volume intimate."
+        elif "continuity" in agent_role.lower():
+            text_feedback = f"[Mock Critique] As Continuity Supervisor: Watch the character's hand movements. Ensure the prop matches framing from wide to close-up."
+        else:
+            text_feedback = f"[Mock Critique] As Creative Director: The camera should slowly dolly in on {payload.speaker} here. Let the silence build tension."
+
+    # Save generated AI comment to DB
+    ann = ScriptAnnotation(
+        script_id=script_id,
+        line_index=payload.line_index,
+        category=payload.category,
+        author=agent_role,
+        text=text_feedback
+    )
+    db.add(ann)
+    db.commit()
+    db.refresh(ann)
+    
+    return {"status": "success", "data": ann}
 
 # --- Database Test Routes ---
 
