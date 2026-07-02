@@ -164,6 +164,16 @@ async def continuity_compare_takes_endpoint(
     take1_name: str = Form("take_1_confrontation.mp4"),
     take2_name: str = Form("take_2_confrontation.mp4")
 ):
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    if active_tier == "free":
+        return {
+            "status": "error",
+            "message": "Subscription plan Pro required to use Visual Continuity Detector.",
+            "gate": True,
+            "required_tier": "pro"
+        }
+
     import shutil
     import os
     import uuid
@@ -294,6 +304,16 @@ def add_episode_endpoint(series_id: int, payload: EpisodeIngest, db: Session = D
 
 @router.post("/series/{series_id}/run-narrative-sweep")
 def run_narrative_sweep_endpoint(series_id: int, db: Session = Depends(get_db)):
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    if active_tier != "enterprise":
+        return {
+            "status": "error",
+            "message": "Subscription plan Enterprise required to run Series Narrative Sweeps.",
+            "gate": True,
+            "required_tier": "enterprise"
+        }
+
     from ai_agents.pre_production.narrative_agent import run_narrative_sweep
     result = run_narrative_sweep(series_id, db)
     return result
@@ -491,6 +511,16 @@ def delete_script_annotation(script_id: int, ann_id: int, db: Session = Depends(
 
 @router.post("/library/{script_id}/annotations/agent-feedback")
 async def generate_agent_script_feedback(script_id: int, payload: AgentFeedbackRequest, db: Session = Depends(get_db)):
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    if active_tier == "free":
+        return {
+            "status": "error",
+            "message": "Subscription plan Pro required to trigger AI agent feedback reviews.",
+            "gate": True,
+            "required_tier": "pro"
+        }
+
     # Retrieve script info for context
     script_item = db.query(DramaScript).filter(DramaScript.id == script_id).first()
     context = ""
@@ -601,6 +631,36 @@ def update_admin_settings(payload: SettingsUpdate, db: Session = Depends(get_db)
             return {"status": "error", "message": f"Invalid value '{value}' for {key}"}
     settings = settings_service.update_settings(db, updates)
     return {"status": "success", "data": {"settings": settings}}
+
+# --- SaaS Billing & Subscriptions ---
+
+class BillingSubscriptionUpdate(BaseModel):
+    tier: str
+
+@router.get("/billing/subscription")
+def get_billing_subscription():
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    return {
+        "status": "success",
+        "data": {
+            "tier": active_tier
+        }
+    }
+
+@router.post("/billing/subscription")
+def update_billing_subscription(payload: BillingSubscriptionUpdate, db: Session = Depends(get_db)):
+    from core import settings_service
+    if payload.tier not in ["free", "pro", "enterprise"]:
+        return {"status": "error", "message": f"Invalid subscription tier: {payload.tier}"}
+    
+    settings_service.update_settings(db, {"subscription_tier": payload.tier})
+    return {
+        "status": "success",
+        "data": {
+            "tier": payload.tier
+        }
+    }
 
 # --- Studio Intelligence agent ---
 

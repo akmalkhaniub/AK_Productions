@@ -87,4 +87,6 @@ DEFAULT_SETTINGS = {
     "ingestion_model": "openai",
     # Provider the Studio Intelligence agent summarizes with.
     "intel_provider": "openai",
+    # Active SaaS subscription tier: 'free', 'pro', or 'enterprise'
+    "subscription_tier": "free",
 }
