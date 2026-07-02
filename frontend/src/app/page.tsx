@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video, Music, Eye, Network } from "lucide-react";
+import { Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Radar, Video, Music, Eye, Network, CreditCard } from "lucide-react";
 import Link from "next/link";
 
 const containerVariants = {
@@ -25,6 +25,7 @@ const agents = [
   { name: "AI Lip-Reader", href: "/lip-reading", icon: Eye, desc: "Visual Speech Recognition (VSR) pipeline: reads lip movements from silent takes and reconstructs dubbed audio." },
   { name: "Continuity Detector", href: "/continuity-detector", icon: Focus, desc: "A visual comparison pipeline that scans consecutive video takes to detect prop, wardrobe, and lighting errors." },
   { name: "Studio Intelligence", href: "/industry-intel", icon: Radar, desc: "A daily agentic brief of what dropped across the channels your studio tracks — and why it matters." },
+  { name: "SaaS Billing Workspace", href: "/billing", icon: CreditCard, desc: "Manage billing configurations, upgrade active subscription tiers, and configure pricing plans." },
 ];
 
 export default function Home() {

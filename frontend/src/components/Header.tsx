@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check, Network, Music, Eye } from "lucide-react";
+import { LayoutDashboard, Sparkles, Clapperboard, Mic2, FileText, Focus, ArrowRight, Settings2, Radar, Palette, Check, Network, Music, Eye, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -43,6 +43,7 @@ export function Header() {
     { name: "Script Breakdown", href: "/script-breakdown", icon: FileText },
     { name: "Continuity", href: "/continuity-detector", icon: Focus },
     { name: "Studio Intel", href: "/industry-intel", icon: Radar },
+    { name: "Billing", href: "/billing", icon: CreditCard },
     { name: "Admin", href: "/admin", icon: Settings2 },
   ];
 
