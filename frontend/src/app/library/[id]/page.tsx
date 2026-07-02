@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, PlaySquare, Video, FileText, MessageSquare, Trash2, Sparkles, Send, Plus, X } from 'lucide-react';
+import { ArrowLeft, Loader2, PlaySquare, Video, FileText, MessageSquare, Trash2, Sparkles, Send, Plus, X, ShieldAlert } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
 import Link from 'next/link';
 
@@ -67,10 +67,23 @@ export default function ScriptViewer() {
     }
   };
 
+  const [activePlan, setActivePlan] = useState<string>("free");
+
+  const fetchPlan = async () => {
+    try {
+      const res = await fetch(apiUrl("/api/billing/subscription"));
+      const resJson = await res.json();
+      if (resJson.status === "success") {
+        setActivePlan(resJson.data.tier);
+      }
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (params.id) {
       fetchScript();
       fetchAnnotations();
+      fetchPlan();
     }
   }, [params.id]);
 
@@ -397,34 +410,51 @@ export default function ScriptViewer() {
               {/* Actions & Comment Input Form */}
               <div className="p-4 border-t border-border bg-slate-950/20 space-y-3">
                 
-                {/* Request AI Feedback panel */}
-                <div className="space-y-2 bg-slate-950/60 p-3 rounded-lg border border-border/40">
-                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider flex items-center gap-1">
-                    <Sparkles className="h-3 w-3 text-accent animate-pulse" />
-                    AI Critique Swarm
-                  </span>
-                  
-                  <div className="flex gap-1.5">
-                    <select
-                      value={selectedAgent}
-                      onChange={(e) => setSelectedAgent(e.target.value)}
-                      className="flex-1 rounded border border-border bg-slate-900 p-1 text-xs text-foreground outline-none focus:border-accent"
+                {activePlan === "free" ? (
+                  <div className="space-y-2 bg-accent/5 p-3 rounded-lg border border-accent/25 text-center">
+                    <span className="text-[9px] text-accent uppercase font-bold tracking-wider flex items-center justify-center gap-1">
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      AI Critique Locked
+                    </span>
+                    <p className="text-[10px] text-muted-foreground leading-normal">
+                      Upgrade to **Pro Studio** to unlock script critiques from the Acting Coach, Continuity, and Director agents.
+                    </p>
+                    <Link
+                      href="/billing"
+                      className="w-full inline-flex h-7 items-center justify-center rounded bg-accent text-accent-foreground text-xs font-bold hover:bg-accent/90 transition-all mt-1"
                     >
-                      <option value="AI Acting Coach">Acting Coach</option>
-                      <option value="AI Continuity Agent">Continuity Supervisor</option>
-                      <option value="AI Creative Director">Creative Director</option>
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={handleRequestAgentFeedback}
-                      disabled={isRequestingFeedback}
-                      className="inline-flex h-7 px-2.5 items-center justify-center rounded bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 disabled:opacity-50 transition-all"
-                    >
-                      {isRequestingFeedback ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Request"}
-                    </button>
+                      Unlock Pro
+                    </Link>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2 bg-slate-950/60 p-3 rounded-lg border border-border/40">
+                    <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-accent animate-pulse" />
+                      AI Critique Swarm
+                    </span>
+                    
+                    <div className="flex gap-1.5">
+                      <select
+                        value={selectedAgent}
+                        onChange={(e) => setSelectedAgent(e.target.value)}
+                        className="flex-1 rounded border border-border bg-slate-900 p-1 text-xs text-foreground outline-none focus:border-accent"
+                      >
+                        <option value="AI Acting Coach">Acting Coach</option>
+                        <option value="AI Continuity Agent">Continuity Supervisor</option>
+                        <option value="AI Creative Director">Creative Director</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={handleRequestAgentFeedback}
+                        disabled={isRequestingFeedback}
+                        className="inline-flex h-7 px-2.5 items-center justify-center rounded bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 disabled:opacity-50 transition-all"
+                      >
+                        {isRequestingFeedback ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Request"}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Comment Text Input */}
                 <form onSubmit={handleAddComment} className="flex gap-2">
