@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Upload, Music, Sparkles, Sliders, Volume2, HelpCircle } from "lucide-react";
+import { Play, Pause, RotateCcw, Upload, Music, Sparkles, Sliders, Volume2, HelpCircle, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import * as THREE from "three";
 
 // Preset songs configuration
@@ -42,6 +43,24 @@ export default function ChoreographyPage() {
   const [activeMoveIndex, setActiveMoveIndex] = useState<number>(0);
   const [logMessages, setLogMessages] = useState<string[]>([]);
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
+  const [activePlan, setActivePlan] = useState<string>("free");
+
+  const fetchPlan = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/billing/subscription");
+      const resJson = await res.json();
+      if (resJson.status === "success") {
+        setActivePlan(resJson.data.tier);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchPlan();
+    const handleUpdate = () => fetchPlan();
+    window.addEventListener("subscription_updated", handleUpdate);
+    return () => window.removeEventListener("subscription_updated", handleUpdate);
+  }, []);
 
   // References for Animation & Three.js
   const sceneRef = useRef<{
@@ -623,255 +642,287 @@ export default function ChoreographyPage() {
           </p>
         </div>
       </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left 2 Cols: 3D Stage & Player */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl group">
-            <canvas ref={canvasRef} className="w-full h-full" />
-            
-            {/* 3D overlay badges */}
-            <div className="absolute top-4 left-4 z-10 flex flex-col space-y-2">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-semibold backdrop-blur text-accent border border-accent/20">
-                <Music className="h-3 w-3" />
-                {selectedTrackName}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-semibold backdrop-blur text-sky-400 border border-sky-400/20">
-                Style: {selectedStyle.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="absolute top-4 right-4 z-10">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-mono font-bold backdrop-blur text-white border border-border">
-                BPM: {bpm.toFixed(0)}
-              </span>
-            </div>
-
-            {/* Playback Progress Overlay */}
-            <div className="absolute bottom-4 left-4 right-4 z-10 rounded-lg bg-slate-900/80 border border-border px-4 py-3 backdrop-blur flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{currentTime.toFixed(1)}s</span>
-                <span className="font-mono text-[10px] text-accent uppercase tracking-wider">
-                  {choreoData?.dance_moves?.[activeMoveIndex]?.move_description || "Synchronizing..."}
-                </span>
-                <span>{duration.toFixed(1)}s</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
-                <div 
-                  className="h-full bg-accent transition-all duration-75"
-                  style={{ width: `${(currentTime / duration) * 100}%` }}
-                />
-              </div>
-            </div>
+      {activePlan === "free" ? (
+        <div className="relative rounded-2xl border border-accent/20 bg-accent/5 overflow-hidden p-8 text-center max-w-2xl mx-auto shadow-2xl space-y-6 my-12 backdrop-blur-md">
+          <div className="mx-auto w-16 h-16 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center text-accent mb-4">
+            <ShieldAlert className="h-8 w-8 animate-pulse" />
           </div>
-
-          {/* Player controls */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              
-              {/* Audio Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePlayPause}
-                  disabled={isAnalyzing}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow hover:bg-accent/90 transition-all glow-hover"
-                >
-                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card/60 text-foreground hover:bg-muted transition-colors"
-                  title="Reset"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Volume */}
-              <div className="flex items-center gap-3">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-24 accent-accent cursor-pointer bg-slate-800 rounded"
-                />
-              </div>
-
-              {/* Speed Multiplier */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground font-semibold">Speed:</span>
-                {[0.5, 1.0, 2.0].map((speed) => (
-                  <button
-                    key={speed}
-                    onClick={() => setPlaybackSpeed(speed)}
-                    className={`px-3 py-1 text-xs font-mono font-bold rounded border ${
-                      playbackSpeed === speed
-                        ? "bg-accent/15 border-accent text-accent"
-                        : "border-border bg-card text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {speed}x
-                  </button>
-                ))}
-              </div>
-
-              {/* Preset Track Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground font-semibold">Style:</span>
-                {["robot", "hip-hop", "salsa", "contemporary"].map((style) => (
-                  <button
-                    key={style}
-                    onClick={() => {
-                      setSelectedStyle(style);
-                      fetchChoreography(style, selectedTrackName);
-                    }}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase ${
-                      selectedStyle === style
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "border-border bg-card text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {style}
-                  </button>
-                ))}
-              </div>
-
-            </div>
-
-            {/* Custom Audio Element if file uploaded */}
-            {customAudioUrl && (
-              <audio
-                ref={(el) => { customAudioRef.current = el; }}
-                src={customAudioUrl}
-                onTimeUpdate={onAudioTimeUpdate}
-                onEnded={onAudioEnded}
-                className="hidden"
-              />
-            )}
+          <h2 className="text-3xl font-display font-bold tracking-tight text-foreground">AI Choreographer Locked</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+            The AI Music-to-Motion Choreographer uses generative transformers to procedurally synchronize 3D skeletal dance routines. This feature is exclusive to the **Pro Studio** plan.
+          </p>
+          <div className="pt-4 flex justify-center gap-4">
+            <Link
+              href="/billing"
+              className="inline-flex h-11 px-6 items-center justify-center rounded-xl bg-accent text-accent-foreground font-bold text-xs tracking-wider hover:bg-accent/90 shadow shadow-accent/25 transition-all glow-hover"
+            >
+              Upgrade to Pro Studio
+            </Link>
           </div>
         </div>
-
-        {/* Right Col: Audio Source, Choreo Routine Log */}
-        <div className="space-y-6">
-          
-          {/* Audio Source / Ingestion */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg space-y-4">
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Sliders className="h-4 w-4 text-accent" />
-              Choreography Config
-            </h3>
+      ) : (
+        <>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Preset selector grid */}
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-semibold">Preset Audio Tracks</label>
-              <div className="grid grid-cols-1 gap-2">
-                {PRESETS.map((track) => (
-                  <button
-                    key={track.id}
-                    onClick={() => handlePresetSelect(track)}
-                    className={`w-full text-left p-3 rounded-lg border text-sm transition-all hover:border-accent/40 ${
-                      selectedTrackName === track.name && !customAudioUrl
-                        ? "bg-accent/5 border-accent text-accent"
-                        : "border-border bg-card/40 text-foreground"
-                    }`}
-                  >
-                    <div className="font-semibold flex items-center justify-between">
-                      <span>{track.name}</span>
-                      <span className="text-[10px] font-mono font-bold bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        {track.bpm} BPM
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{track.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Left 2 Cols: 3D Stage & Player */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl group">
+                <canvas ref={canvasRef} className="w-full h-full" />
+                
+                {/* 3D overlay badges */}
+                <div className="absolute top-4 left-4 z-10 flex flex-col space-y-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-semibold backdrop-blur text-accent border border-accent/20">
+                    <Music className="h-3 w-3" />
+                    {selectedTrackName}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-semibold backdrop-blur text-sky-400 border border-sky-400/20">
+                    Style: {selectedStyle.toUpperCase()}
+                  </span>
+                </div>
 
-            <div className="border-t border-border/60 my-4" />
+                <div className="absolute top-4 right-4 z-10">
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 text-xs font-mono font-bold backdrop-blur text-white border border-border">
+                    BPM: {bpm.toFixed(0)}
+                  </span>
+                </div>
 
-            {/* Audio Upload */}
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-semibold">Or Upload Track (.mp3, .wav)</label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="audio/*"
-                onChange={handleAudioUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isAnalyzing}
-                className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/30 p-4 text-sm text-muted-foreground hover:bg-muted/30 transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                <span>Upload Custom Soundtrack</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Choreography Routine Timeline */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col h-[400px]">
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-accent" />
-              Generated Moves
-            </h3>
-            
-            {isAnalyzing ? (
-              <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-                <span className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-                <span className="text-xs text-muted-foreground">Agent mapping choreography timeline...</span>
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
-                {choreoData?.dance_moves?.map((move: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-lg border text-sm transition-all ${
-                      activeMoveIndex === idx
-                        ? "bg-accent/10 border-accent/60 shadow"
-                        : "border-border bg-card/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs text-accent font-semibold">{move.time.toFixed(1)}s</span>
-                      <span className="text-xs font-bold uppercase text-foreground">{move.pose_name.replace("_", " ")}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{move.move_description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-sky-400" style={{ width: `${move.intensity * 100}%` }} />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">Int: {(move.intensity * 10).toFixed(0)}</span>
-                    </div>
+                {/* Playback Progress Overlay */}
+                <div className="absolute bottom-4 left-4 right-4 z-10 rounded-lg bg-slate-900/80 border border-border px-4 py-3 backdrop-blur flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{currentTime.toFixed(1)}s</span>
+                    <span className="font-mono text-[10px] text-accent uppercase tracking-wider">
+                      {choreoData?.dance_moves?.[activeMoveIndex]?.move_description || "Synchronizing..."}
+                    </span>
+                    <span>{duration.toFixed(1)}s</span>
                   </div>
-                ))}
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
+                    <div 
+                      className="h-full bg-accent transition-all duration-75"
+                      style={{ width: `${(currentTime / duration) * 100}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Player controls */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  
+                  {/* Audio Controls */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePlayPause}
+                      disabled={isAnalyzing}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow hover:bg-accent/90 transition-all glow-hover"
+                    >
+                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card/60 text-foreground hover:bg-muted transition-colors"
+                      title="Reset"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Volume */}
+                  <div className="flex items-center gap-3">
+                    <Volume2 className="h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={volume}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      className="w-24 accent-accent cursor-pointer bg-slate-800 rounded"
+                    />
+                  </div>
+
+                  {/* Speed Multiplier */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-semibold">Speed:</span>
+                    {[0.5, 1.0, 2.0].map((speed) => (
+                      <button
+                        key={speed}
+                        onClick={() => setPlaybackSpeed(speed)}
+                        className={`px-3 py-1 text-xs font-mono font-bold rounded border ${
+                          playbackSpeed === speed
+                            ? "bg-accent/15 border-accent text-accent"
+                            : "border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {speed}x
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Preset Track Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-semibold">Style:</span>
+                    {["robot", "hip-hop", "salsa", "contemporary"].map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => {
+                          setSelectedStyle(style);
+                          fetchChoreography(style, selectedTrackName);
+                        }}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase ${
+                          selectedStyle === style
+                            ? "bg-accent text-accent-foreground border-accent"
+                            : "border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {style}
+                      </button>
+                    ))}
+                  </div>
+
+                </div>
+
+                {/* Custom Audio Element if file uploaded */}
+                {customAudioUrl && (
+                  <audio
+                    ref={(el) => { customAudioRef.current = el; }}
+                    src={customAudioUrl}
+                    onTimeUpdate={onAudioTimeUpdate}
+                    onEnded={onAudioEnded}
+                    className="hidden"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Right Col: Audio Source, Choreo Routine Log */}
+            <div className="space-y-6">
+              
+              {/* Audio Source / Ingestion */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg space-y-4">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Sliders className="h-4 w-4 text-accent" />
+                  Choreography Config
+                </h3>
+                
+                {/* Preset selector grid */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-semibold">Preset Audio Tracks</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PRESETS.map((track) => (
+                      <button
+                        key={track.id}
+                        onClick={() => handlePresetSelect(track)}
+                        className={`w-full text-left p-3 rounded-lg border text-sm transition-all hover:border-accent/40 ${
+                          selectedTrackName === track.name && !customAudioUrl
+                            ? "bg-accent/5 border-accent text-accent"
+                            : "border-border bg-card/40 text-foreground"
+                        }`}
+                      >
+                        <div className="font-semibold flex items-center justify-between">
+                          <span>{track.name}</span>
+                          <span className="text-[10px] font-mono font-bold bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                            {track.bpm} BPM
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{track.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 my-4" />
+
+                {/* Audio Upload */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-semibold">Or Upload Track (.mp3, .wav)</label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="audio/*"
+                    onChange={handleAudioUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/30 p-4 text-sm text-muted-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Upload Custom Audio File</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Choreography Routine Timeline / List */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col h-[400px]">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                  Planned Dance Moves
+                </h3>
+
+                {isAnalyzing ? (
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-3">
+                    <span className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+                    <span className="text-xs text-muted-foreground">Gemini is mapping beats and designing poses...</span>
+                  </div>
+                ) : choreoData && choreoData.dance_moves ? (
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
+                    {choreoData.dance_style_notes && (
+                      <div className="p-3 bg-muted/40 rounded-lg text-xs text-muted-foreground leading-normal mb-2 border border-border/50">
+                        {choreoData.dance_style_notes}
+                      </div>
+                    )}
+                    
+                    {choreoData.dance_moves.map((move: any, idx: number) => {
+                      const isActive = activeMoveIndex === idx;
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-lg border text-sm transition-all ${
+                            isActive
+                              ? "bg-accent/15 border-accent/60 shadow"
+                              : "border-border bg-card/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-xs text-sky-400 uppercase">{move.pose_name}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground">{move.time.toFixed(2)}s</span>
+                          </div>
+                          <p className="text-xs text-foreground mt-1.5 font-sans leading-relaxed">{move.move_description}</p>
+                          <div className="text-[10px] text-muted-foreground mt-2 text-right">
+                            Intensity: {Math.round(move.intensity * 100)}%
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-2 text-muted-foreground">
+                    <Music className="h-8 w-8 opacity-40" />
+                    <div className="text-xs">No choreography loaded yet.</div>
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
 
-        </div>
-      </div>
-
-      {/* Agent Activity Logs */}
-      <div className="rounded-xl border border-border bg-slate-900/60 p-5">
-        <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-          Choreographer Agent Console Logs
-        </h4>
-        <div className="h-32 overflow-y-auto font-mono text-xs text-muted-foreground space-y-1 bg-slate-950 p-4 rounded-lg border border-border/40">
-          {logMessages.map((log, index) => (
-            <div key={index} className="leading-relaxed">{log}</div>
-          ))}
-          {logMessages.length === 0 && <div className="text-muted-foreground/40">Console waiting for actions...</div>}
-        </div>
-      </div>
+          {/* Agent Activity Logs */}
+          <div className="rounded-xl border border-border bg-slate-900/60 p-5">
+            <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              Choreographer Agent Console Logs
+            </h4>
+            <div className="h-32 overflow-y-auto font-mono text-xs text-muted-foreground space-y-1 bg-slate-950 p-4 rounded-lg border border-border/40">
+              {logMessages.map((log, index) => (
+                <div key={index} className="leading-relaxed">{log}</div>
+              ))}
+              {logMessages.length === 0 && <div className="text-muted-foreground/40">Console waiting for actions...</div>}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
