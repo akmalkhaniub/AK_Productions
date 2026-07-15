@@ -267,6 +267,43 @@ async def lip_reading_restore_endpoint(
                 pass
         return {"status": "error", "message": str(e)}
 
+@router.post("/choreography/generate")
+def choreography_generate_endpoint(
+    style: str = Form("robot"),
+    track_name: str = Form("Midnight Neon Drive"),
+    file: UploadFile | None = File(None)
+):
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    if active_tier == "free":
+        return {
+            "status": "error",
+            "message": "Subscription plan Pro required to generate choreographies.",
+            "gate": True,
+            "required_tier": "pro"
+        }
+
+    import shutil
+    import os
+    import uuid
+    from ai_agents.production.video_continuity_agent import TEMP_DIR
+
+    file_path = ""
+    temp_file_path = ""
+
+    if file is not None:
+        safe_name = f"upload_{uuid.uuid4().hex}_{file.filename}"
+        temp_file_path = os.path.join(TEMP_DIR, safe_name)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        file_path = temp_file_path
+
+    try:
+        result = generate_choreography(track_name, file_path, style)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # --- Series Batch Ingestion & Narrative Intelligence ---
 
 class SeriesCreate(BaseModel):
