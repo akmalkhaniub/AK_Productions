@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Eye, Upload, Play, Pause, RefreshCw, Edit2, Check, Video, MessageSquare, Volume2, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface Segment {
   speaker: string;
@@ -34,6 +35,24 @@ export default function LipReadingPage() {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [activePlan, setActivePlan] = useState<string>("free");
+  
+  const fetchPlan = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/billing/subscription");
+      const resJson = await res.json();
+      if (resJson.status === "success") {
+        setActivePlan(resJson.data.tier);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchPlan();
+    const handleUpdate = () => fetchPlan();
+    window.addEventListener("subscription_updated", handleUpdate);
+    return () => window.removeEventListener("subscription_updated", handleUpdate);
+  }, []);
   
   // Setup log helper
   const addLog = (msg: string) => {
@@ -269,250 +288,271 @@ export default function LipReadingPage() {
           Restore audio tracks and extract dialogue from silent on-set footage by analyzing actor lip keypoints using Google Gemini 2.5 Pro.
         </p>
       </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left 2 Cols: Split-Screen Comparison Player */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Original Silent Video (with Lip Landmark Overlay) */}
-            <div className="space-y-2">
-              <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                <Video className="h-3 w-3" /> Original Silent Footage
-              </span>
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl group">
-                <video
-                  ref={videoRef}
-                  src={originalUrl}
-                  onTimeUpdate={handleTimeUpdate}
-                  onEnded={() => setIsPlaying(false)}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                />
-                
-                {/* Lip Landmark Canvas */}
-                <canvas 
-                  ref={canvasRef} 
-                  width={280} 
-                  height={200}
-                  className="absolute inset-0 pointer-events-none w-full h-full"
-                />
-
-                <div className="absolute top-3 left-3 z-10">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2 py-0.5 text-[10px] font-semibold text-sky-400 border border-sky-400/20 backdrop-blur">
-                    LIP TRACKING ACTIVE
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Restored Video (With Audio) */}
-            <div className="space-y-2">
-              <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                <Volume2 className="h-3 w-3 text-accent" /> Restored Dialogue Audio
-              </span>
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl flex items-center justify-center">
-                {restoredUrl ? (
-                  <video
-                    ref={restoredVideoRef}
-                    src={restoredUrl}
-                    onEnded={() => setIsPlaying(false)}
-                    className="w-full h-full object-cover"
-                    playsInline
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
-                    <ShieldAlert className="h-8 w-8 text-muted-foreground/60" />
-                    <div className="text-xs text-muted-foreground">Restored video will appear here after running Gemini VSR.</div>
-                  </div>
-                )}
-
-                <div className="absolute top-3 left-3 z-10">
-                  <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-semibold border backdrop-blur ${
-                    restoredUrl 
-                      ? "bg-accent/10 text-accent border-accent/20" 
-                      : "bg-slate-900/80 text-muted-foreground border-border"
-                  }`}>
-                    {restoredUrl ? "AUDIO RESTORED" : "AWAITING SYNTHESIS"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
+      {activePlan === "free" ? (
+        <div className="relative rounded-2xl border border-accent/20 bg-accent/5 overflow-hidden p-8 text-center max-w-2xl mx-auto shadow-2xl space-y-6 my-12 backdrop-blur-md">
+          <div className="mx-auto w-16 h-16 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center text-accent mb-4">
+            <ShieldAlert className="h-8 w-8 animate-pulse" />
           </div>
-
-          {/* Player controls */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handlePlayPause}
-                disabled={isAnalyzing || !originalUrl}
-                className="inline-flex h-11 px-5 items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground shadow hover:bg-accent/90 transition-all font-semibold glow-hover"
-              >
-                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                <span>{isPlaying ? "Pause" : "Play & Synced Preview"}</span>
-              </button>
-
-              <button
-                onClick={() => runRestoration()}
-                disabled={isAnalyzing || !originalUrl}
-                className="inline-flex h-11 px-5 items-center justify-center gap-2 rounded-lg border border-border bg-card/60 text-foreground hover:bg-muted font-semibold transition-colors"
-              >
-                <RefreshCw className={`h-4 w-4 ${isAnalyzing ? "animate-spin" : ""}`} />
-                <span>Run VSR Reconstruction</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono">Time: {currentTime.toFixed(2)}s</span>
-            </div>
+          <h2 className="text-3xl font-display font-bold tracking-tight text-foreground">Lip-Reading VSR Locked</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+            The AI Lip-Reading & speech reconstruction engine uses advanced multimodal Gemini models to decode phonetic mouth movements. This feature is exclusive to the **Pro Studio** plan.
+          </p>
+          <div className="pt-4 flex justify-center gap-4">
+            <Link
+              href="/billing"
+              className="inline-flex h-11 px-6 items-center justify-center rounded-xl bg-accent text-accent-foreground font-bold text-xs tracking-wider hover:bg-accent/90 shadow shadow-accent/25 transition-all glow-hover"
+            >
+              Upgrade to Pro Studio
+            </Link>
           </div>
-
         </div>
-
-        {/* Right Col: Preset Ingestion, Reconstructed Script */}
-        <div className="space-y-6">
-          
-          {/* Preset Selector */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg space-y-4">
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Eye className="h-4 w-4 text-accent" />
-              Source Footage
-            </h3>
+      ) : (
+        <>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-semibold">Preset Silent Takes</label>
-              <div className="grid grid-cols-1 gap-2">
-                {PRESET_FILES.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedFile(f.id)}
-                    className={`w-full text-left p-3 rounded-lg border text-sm transition-all hover:border-accent/40 ${
-                      selectedFile === f.id
-                        ? "bg-accent/5 border-accent text-accent"
-                        : "border-border bg-card/40 text-foreground"
-                    }`}
-                  >
-                    <div className="font-semibold">{f.name}</div>
-                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{f.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border/60 my-4" />
-
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-semibold">Or Upload Silent Video (.mp4)</label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="video/*"
-                onChange={handleUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isAnalyzing}
-                className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/30 p-4 text-sm text-muted-foreground hover:bg-muted/30 transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                <span>Upload Custom Silent File</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Reconstructed Dialogue timeline */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col h-[400px]">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-accent" />
-                Reconstructed Script
-              </h3>
+            {/* Left 2 Cols: Split-Screen Comparison Player */}
+            <div className="lg:col-span-2 space-y-6">
               
-              {segments.length > 0 && (
-                <button
-                  onClick={() => isEditing ? applyCorrections() : setIsEditing(true)}
-                  className="inline-flex h-8 px-3 items-center gap-1 text-xs font-semibold rounded bg-muted text-foreground hover:bg-muted/80 transition-colors"
-                >
-                  {isEditing ? <Check className="h-3 w-3 text-green-500" /> : <Edit2 className="h-3 w-3" />}
-                  <span>{isEditing ? "Save & Rebuild" : "Edit Dialog"}</span>
-                </button>
-              )}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Original Silent Video (with Lip Landmark Overlay) */}
+                <div className="space-y-2">
+                  <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider">
+                    <Video className="h-3 w-3" /> Original Silent Footage
+                  </span>
+                  <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl group">
+                    <video
+                      ref={videoRef}
+                      src={originalUrl}
+                      onTimeUpdate={handleTimeUpdate}
+                      onEnded={() => setIsPlaying(false)}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                    
+                    {/* Lip Landmark Canvas */}
+                    <canvas 
+                      ref={canvasRef} 
+                      width={280} 
+                      height={200}
+                      className="absolute inset-0 pointer-events-none w-full h-full"
+                    />
 
-            {isAnalyzing ? (
-              <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-                <span className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-                <span className="text-xs text-muted-foreground">Gemini is translating lip movements...</span>
-              </div>
-            ) : segments.length > 0 ? (
-              <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
-                {segments.map((seg, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-lg border text-sm transition-all ${
-                      activeSegmentIndex === idx
-                        ? "bg-accent/10 border-accent/60 shadow"
-                        : "border-border bg-card/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-sky-400">{seg.speaker}</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        {seg.start.toFixed(1)}s - {seg.end.toFixed(1)}s
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/80 px-2 py-0.5 text-[10px] font-semibold text-sky-400 border border-sky-400/20 backdrop-blur">
+                        LIP TRACKING ACTIVE
                       </span>
                     </div>
-                    {isEditing ? (
-                      <textarea
-                        value={seg.text}
-                        onChange={(e) => handleSegmentChange(idx, "text", e.target.value)}
-                        className="w-full text-xs bg-slate-900 border border-border rounded mt-1.5 p-1 text-foreground focus:outline-none focus:border-accent"
-                        rows={2}
+                  </div>
+                </div>
+
+                {/* Restored Video (With Audio) */}
+                <div className="space-y-2">
+                  <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 uppercase tracking-wider">
+                    <Volume2 className="h-3 w-3 text-accent" /> Restored Dialogue Audio
+                  </span>
+                  <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-slate-950 shadow-xl flex items-center justify-center">
+                    {restoredUrl ? (
+                      <video
+                        ref={restoredVideoRef}
+                        src={restoredUrl}
+                        onEnded={() => setIsPlaying(false)}
+                        className="w-full h-full object-cover"
+                        playsInline
                       />
                     ) : (
-                      <p className="text-xs text-foreground mt-1.5 leading-relaxed">"{seg.text}"</p>
+                      <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+                        <ShieldAlert className="h-8 w-8 text-muted-foreground/60" />
+                        <div className="text-xs text-muted-foreground">Restored video will appear here after running Gemini VSR.</div>
+                      </div>
                     )}
-                    <div className="text-[10px] text-muted-foreground mt-1 text-right">
-                      Confidence: {(seg.confidence * 100).toFixed(0)}%
+
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-semibold border backdrop-blur ${
+                        restoredUrl 
+                          ? "bg-accent/10 text-accent border-accent/20" 
+                          : "bg-slate-900/80 text-muted-foreground border-border"
+                      }`}>
+                        {restoredUrl ? "AUDIO RESTORED" : "AWAITING SYNTHESIS"}
+                      </span>
                     </div>
                   </div>
-                ))}
+                </div>
+
               </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-2 text-muted-foreground">
-                <MessageSquare className="h-8 w-8/40 opacity-40" />
-                <div className="text-xs">No reconstructed script available yet.</div>
-                <button
-                  onClick={() => runRestoration()}
-                  className="text-xs text-accent font-semibold hover:underline mt-1"
-                >
-                  Run Gemini Lip-Reading VSR
-                </button>
+
+              {/* Player controls */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePlayPause}
+                    disabled={isAnalyzing || !originalUrl}
+                    className="inline-flex h-11 px-5 items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground shadow hover:bg-accent/90 transition-all font-semibold glow-hover"
+                  >
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    <span>{isPlaying ? "Pause" : "Play & Synced Preview"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => runRestoration()}
+                    disabled={isAnalyzing || !originalUrl}
+                    className="inline-flex h-11 px-5 items-center justify-center gap-2 rounded-lg border border-border bg-card/60 text-foreground hover:bg-muted font-semibold transition-colors"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isAnalyzing ? "animate-spin" : ""}`} />
+                    <span>Run VSR Reconstruction</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-mono">Time: {currentTime.toFixed(2)}s</span>
+                </div>
               </div>
-            )}
+
+            </div>
+
+            {/* Right Col: Preset Ingestion, Reconstructed Script */}
+            <div className="space-y-6">
+              
+              {/* Preset Selector */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg space-y-4">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-accent" />
+                  Source Footage
+                </h3>
+                
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-semibold">Preset Silent Takes</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PRESET_FILES.map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => setSelectedFile(f.id)}
+                        className={`w-full text-left p-3 rounded-lg border text-sm transition-all hover:border-accent/40 ${
+                          selectedFile === f.id
+                            ? "bg-accent/5 border-accent text-accent"
+                            : "border-border bg-card/40 text-foreground"
+                        }`}
+                      >
+                        <div className="font-semibold">{f.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{f.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-border/60 my-4" />
+
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-semibold">Or Upload Silent Video (.mp4)</label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="video/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/30 p-4 text-sm text-muted-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Upload Custom Silent File</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Reconstructed Dialogue timeline */}
+              <div className="rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col h-[400px]">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-accent" />
+                    Reconstructed Script
+                  </h3>
+                  
+                  {segments.length > 0 && (
+                    <button
+                      onClick={() => isEditing ? applyCorrections() : setIsEditing(true)}
+                      className="inline-flex h-8 px-3 items-center gap-1 text-xs font-semibold rounded bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                    >
+                      {isEditing ? <Check className="h-3 w-3 text-green-500" /> : <Edit2 className="h-3 w-3" />}
+                      <span>{isEditing ? "Save & Rebuild" : "Edit Dialog"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {isAnalyzing ? (
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-3">
+                    <span className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+                    <span className="text-xs text-muted-foreground">Gemini is translating lip movements...</span>
+                  </div>
+                ) : segments.length > 0 ? (
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
+                    {segments.map((seg, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-lg border text-sm transition-all ${
+                          activeSegmentIndex === idx
+                            ? "bg-accent/10 border-accent/60 shadow"
+                            : "border-border bg-card/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-sky-400">{seg.speaker}</span>
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {seg.start.toFixed(1)}s - {seg.end.toFixed(1)}s
+                          </span>
+                        </div>
+                        {isEditing ? (
+                          <textarea
+                            value={seg.text}
+                            onChange={(e) => handleSegmentChange(idx, "text", e.target.value)}
+                            className="w-full text-xs bg-slate-900 border border-border rounded mt-1.5 p-1 text-foreground focus:outline-none focus:border-accent"
+                            rows={2}
+                          />
+                        ) : (
+                          <p className="text-xs text-foreground mt-1.5 leading-relaxed font-sans">"{seg.text}"</p>
+                        )}
+                        <div className="text-[10px] text-muted-foreground mt-1 text-right">
+                          Confidence: {(seg.confidence * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-2 text-muted-foreground">
+                    <MessageSquare className="h-8 w-8 opacity-40" />
+                    <div className="text-xs">No reconstructed script available yet.</div>
+                    <button
+                      onClick={() => runRestoration()}
+                      className="text-xs text-accent font-semibold hover:underline mt-1"
+                    >
+                      Run Gemini Lip-Reading VSR
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
 
-        </div>
-      </div>
-
-      {/* Agent Activity Logs */}
-      <div className="rounded-xl border border-border bg-slate-900/60 p-5">
-        <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          Restoration Agent Swarm Console Logs
-        </h4>
-        <div className="h-32 overflow-y-auto font-mono text-xs text-muted-foreground space-y-1 bg-slate-950 p-4 rounded-lg border border-border/40">
-          {logs.map((log, index) => (
-            <div key={index} className="leading-relaxed">{log}</div>
-          ))}
-          {logs.length === 0 && <div className="text-muted-foreground/40">Console waiting for actions...</div>}
-        </div>
-      </div>
+          {/* Agent Activity Logs */}
+          <div className="rounded-xl border border-border bg-slate-900/60 p-5">
+            <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+              Restoration Agent Swarm Console Logs
+            </h4>
+            <div className="h-32 overflow-y-auto font-mono text-xs text-muted-foreground space-y-1 bg-slate-950 p-4 rounded-lg border border-border/40">
+              {logs.map((log, index) => (
+                <div key={index} className="leading-relaxed">{log}</div>
+              ))}
+              {logs.length === 0 && <div className="text-muted-foreground/40">Console waiting for actions...</div>}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
