@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
@@ -6,6 +7,30 @@ import { Sparkles, Clapperboard, Mic2, FileText } from 'lucide-react-native';
 
 export default function Dashboard() {
   const router = useRouter();
+  const [activePlan, setActivePlan] = useState<string>('free');
+
+  useEffect(() => {
+    const getPlan = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/billing/subscription');
+        const resJson = await res.json();
+        if (resJson.status === 'success') {
+          setActivePlan(resJson.data.tier);
+        }
+      } catch (e) {
+        // fallback
+      }
+    };
+    getPlan();
+  }, []);
+
+  const handleModulePress = (modId: string) => {
+    if (activePlan === 'free' && modId === 'acting-coach') {
+      alert("Upgrade Required: Upgrade to the Pro Studio plan to access AI Acting Coach on mobile.");
+      return;
+    }
+    router.push(`/${modId}` as any);
+  };
 
   const modules = [
     { id: 'ip-discovery', title: 'IP Discovery', icon: Sparkles, desc: 'Scan historical databases for remake gems.', color: 'rgba(6, 182, 212, 0.2)', text: '#22d3ee' },
@@ -23,7 +48,12 @@ export default function Dashboard() {
         style={styles.header}
       >
         <Text style={styles.title}>Welcome back, Director.</Text>
-        <Text style={styles.subtitle}>All agentic modules are online and standing by.</Text>
+        <View style={styles.planBadgeContainer}>
+          <Text style={styles.subtitle}>All agentic modules are online.</Text>
+          <View style={[styles.planBadge, { backgroundColor: activePlan === 'free' ? '#475569' : activePlan === 'pro' ? '#7c3aed' : '#0284c7' }]}>
+            <Text style={styles.planBadgeText}>{activePlan.toUpperCase()} TIER</Text>
+          </View>
+        </View>
       </MotiView>
 
       <View style={styles.grid}>
@@ -38,7 +68,7 @@ export default function Dashboard() {
             >
               <TouchableOpacity 
                 activeOpacity={0.8}
-                onPress={() => router.push(`/${mod.id}` as any)}
+                onPress={() => handleModulePress(mod.id)}
               >
                 <BlurView intensity={20} tint="dark" style={[styles.card, { borderColor: mod.color }]}>
                   <View style={[styles.iconContainer, { backgroundColor: mod.color }]}>
@@ -111,5 +141,22 @@ const styles = StyleSheet.create({
   launchText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  planBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  planBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  planBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   }
 });
