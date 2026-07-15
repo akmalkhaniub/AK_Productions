@@ -217,6 +217,56 @@ async def continuity_compare_takes_endpoint(
                     pass
         return {"status": "error", "message": str(e)}
 
+@router.post("/lip-reading/restore")
+async def lip_reading_restore_endpoint(
+    file: UploadFile | None = File(None),
+    filename: str = Form("silent_confrontation.mp4"),
+    custom_segments_json: str | None = Form(None)
+):
+    from core import settings_service
+    active_tier = settings_service.get("subscription_tier") or "free"
+    if active_tier == "free":
+        return {
+            "status": "error",
+            "message": "Subscription plan Pro required to run Visual Speech Recognition.",
+            "gate": True,
+            "required_tier": "pro"
+        }
+
+    import shutil
+    import os
+    import uuid
+    import json
+    from ai_agents.production.lip_reader_agent import TEMP_DIR
+    
+    target_filename = filename
+    temp_file_path = ""
+    
+    if file is not None:
+        safe_name = f"upload_{uuid.uuid4().hex}_{file.filename}"
+        temp_file_path = os.path.join(TEMP_DIR, safe_name)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        target_filename = safe_name
+
+    custom_segments = None
+    if custom_segments_json:
+        try:
+            custom_segments = json.loads(custom_segments_json)
+        except Exception as e:
+            return {"status": "error", "message": f"Invalid custom_segments_json: {str(e)}"}
+
+    try:
+        result = await restore_silent_video_dialogue(target_filename, custom_segments)
+        return result
+    except Exception as e:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
+        return {"status": "error", "message": str(e)}
+
 # --- Series Batch Ingestion & Narrative Intelligence ---
 
 class SeriesCreate(BaseModel):
