@@ -28,7 +28,7 @@ export default function Dashboard() {
 
       <View style={styles.grid}>
         {modules.map((mod, index) => {
-          const IconComponent = mod.icon;
+          const IconComponent = mod.icon as any;
           return (
             <MotiView 
               key={mod.id}
